@@ -62,3 +62,6 @@ Network protocols are implemented as pluginlib plugins, allowing the creation of
 
 ### Tuning
 Tether can be launched with logger level DEBUG, which provides useful information for tuning the compression, rate and stale message parameters.  For each message that is sent, the receiving side will output the number of bytes received, the decompressed size in bytes and the transmission delay.
+
+## Acknowledgements
+This package was developed for use in the Indy Autonomous Challenge by the Purdue AI Racing team.  Inspiration was taken from mqtt_client (https://github.com/ika-rwth-aachen/mqtt_client/).
