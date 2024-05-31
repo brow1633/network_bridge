@@ -1,0 +1,20 @@
+# See Udp1.yaml for parameter descriptions
+/**/*:
+  ros__parameters:
+    network_interface: "ros2_tether::TcpInterface"
+  
+    TcpInterface:
+      role: "client"
+      remote_address: "127.0.0.1"
+      port: 5000
+    
+    default_rate: 100.0
+
+    default_zstd_level: 3
+
+    publish_stale_data: False
+
+    topics:
+      - "/MyDefaultTopic2"
+
+    namespace: "/tcp2"

@@ -1,0 +1,67 @@
+/**/*:
+  ros__parameters:
+    ### 
+    ## Parameters for Network Interface
+    ###
+    
+    # Desired network_interface.  Current options:
+    # ros2_tether::UdpInterface 
+    #   - Quick but unreliable
+    #   - Use for frequent data that you care about now (i.e. telemetry)
+    # ros2_tether::TcpInterface 
+    #   - Slow but reliable
+    #   - Use for infrequent important communication (i.e. state transitions)
+    # NOTE: If you have both use cases, you can use two instances of ros2 tether
+    network_interface: "ros2_tether::UdpInterface"
+
+    UdpInterface:
+      # This machines local IP (e.g. on LAN, VPN, etc)
+      local_address: "127.0.0.1" #e.g. 10.8.0.1
+
+      # Desired receive port (must be send port of remote)
+      receive_port: 5000
+
+      # Remote's IP address
+      remote_address: "127.0.0.1" #e.g. 10.8.0.2
+
+      # Desired send port (must be receive port of remote)
+      send_port: 5001
+
+    ### 
+    ## Parameters for ROS2->Network
+    ###
+
+    # The rate at which to send data over the network interface
+    # This could be set >= than publish rate if you wish to 
+    # get every message, or < if you wish to only sample the message.
+    default_rate: 100.0
+
+    # The level of compression to use when sending data over the network (1-22).
+    # Beware that small messages may actually expand with high compression.
+    # Higher compression levels are good for large messages when bandwidth is
+    # small.  Lower compression levels are good for smaller messages or in 
+    # cases where bandwidth is less limited than CPU.
+    # Launching with debug logging will show message size in bytes if you wish to tune this.
+    default_zstd_level: 3
+
+    # Whether to re-transmit data if a new ROS2 message has not been
+    # received within the topic rate.  Can be useful in unreliable 
+    # networks where you want to increase odds of getting every message.
+    publish_stale_data: False
+
+    # List all topics that are to be sent over the network interface
+    topics:
+      - "/MyDefaultTopic"
+      - "/MySpecialTopic"
+    
+    # Defaults can be overridden for all topics
+    /MySpecialTopic:
+      rate: 2.0
+      zstd_level: 5
+    
+    ### 
+    ## Parameters for Network->ROS2
+    ###
+
+    # Namespace of published ROS2 messages.  Can be useful for testing.
+    namespace: "/tcp2"

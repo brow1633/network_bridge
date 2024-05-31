@@ -1,0 +1,21 @@
+# See Udp1.yaml for parameter descriptions
+/**/*:
+  ros__parameters:
+    network_interface: "ros2_tether::UdpInterface"
+
+    UdpInterface:
+      local_address: "127.0.0.1" #e.g. 10.8.0.2
+      receive_port: 5001
+      remote_address: "127.0.0.1" #e.g. 10.8.0.1
+      send_port: 5000
+    
+    default_rate: 100.0
+
+    default_zstd_level: 3
+
+    publish_stale_data: False
+
+    topics:
+      - "/MyDefaultTopic2"
+
+    namespace: "/udp2"
