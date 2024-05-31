@@ -59,9 +59,12 @@
       rate: 2.0
       zstd_level: 5
     
+    # Namespace to be applied to subscribed topics
+    subscribe_namespace: "/udp1"
+    
     ### 
     ## Parameters for Network->ROS2
     ###
 
-    # Namespace of published ROS2 messages.  Can be useful for testing.
-    namespace: "/tcp2"
+    # namespace of published ros2 messages. Can be useful for testing.
+    publish_namespace: "/udp1"

@@ -144,7 +144,7 @@ protected:
     /**
      * @brief the namespace for the publishers.
      */
-    std::string namespace_;
+    std::string publish_namespace_;
 };
 
 #endif // UDP_SENDER_RECEIVER_HPP

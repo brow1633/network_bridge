@@ -18,4 +18,5 @@
     topics:
       - "/MyDefaultTopic2"
 
-    namespace: "/udp2"
+    subscribe_namespace: "/udp2"
+    publish_namespace: "/udp2"

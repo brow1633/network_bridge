@@ -6,22 +6,26 @@
 #include <rclcpp/qos.hpp>
 #include "ros2_tether/subscription_manager.hpp"
 
-SubscriptionManager::SubscriptionManager(const rclcpp::Node::SharedPtr &  node, const std::string &topic, int zstd_compression_level, bool publish_stale_data) :
+SubscriptionManager::SubscriptionManager(const rclcpp::Node::SharedPtr &  node, const std::string &topic, 
+    const std::string &subscribe_namespace, int zstd_compression_level, bool publish_stale_data) :
     node_(node),
     msg_type_(),
     topic_(topic),
+    subscribe_namespace_(subscribe_namespace),
     zstd_compression_level_(zstd_compression_level),
     received_msg_(false),
     is_stale_(true),
     publish_stale_data_(publish_stale_data),
     data_()
 {
-    setup_subscription(topic);
+    setup_subscription();
 }
 
-void SubscriptionManager::setup_subscription(const std::string &topic)
+void SubscriptionManager::setup_subscription()
 {
     const auto all_topics_and_types = node_->get_topic_names_and_types();
+    
+    std::string topic = subscribe_namespace_ + topic_;
 
     if(all_topics_and_types.find(topic) == all_topics_and_types.end())
     {
@@ -80,7 +84,7 @@ const std::vector<uint8_t>& SubscriptionManager::get_data()
 {
     if(!subscriber)
     {
-        setup_subscription(topic_);
+        setup_subscription();
         RCLCPP_DEBUG(node_->get_logger(), "Send Timer: Subscriber is not set");
         return data_;
     }

@@ -4,8 +4,8 @@
     network_interface: "ros2_tether::TcpInterface"
 
     TcpInterface:
-      role: "server"
-      port: 5000
+      role: "server" # "client" or "server"
+      port: 5000 # Desired port to listen on
     
     default_rate: 100.0
 
@@ -16,4 +16,5 @@
     topics:
       - "/MyDefaultTopic"
 
-    namespace: "/tcp1"
+    subscribe_namespace: "/tcp1"
+    publish_namespace: "/tcp1"

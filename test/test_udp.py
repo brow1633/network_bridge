@@ -40,7 +40,7 @@ class UdpTestNode(Node):
         super().__init__('test_node')
         self.test_message_received = Future()
         self.received_msg = None
-        self.publisher = self.create_publisher(String, '/MyDefaultTopic', 10)
+        self.publisher = self.create_publisher(String, '/udp1/MyDefaultTopic', 10)
         self.subscriber = self.create_subscription(String, '/udp2/MyDefaultTopic', self.listener_callback, 10)
  
     def publish(self, msg):

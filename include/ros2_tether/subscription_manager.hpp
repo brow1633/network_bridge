@@ -26,9 +26,11 @@ public:
      * @param node A pointer to the rclcpp::Node object.
      * @param topic The topic to subscribe to.
      * @param zstd_compression_level The compression level for Zstandard compression (default: 3).
+     * @param namespace The namespace for the subscription.
      * @param publish_stale_data Flag indicating whether to publish stale data (default: false).
      */
-    SubscriptionManager(const rclcpp::Node::SharedPtr & node, const std::string & topic, int zstd_compression_level = 3, bool publish_stale_data = false);
+    SubscriptionManager(const rclcpp::Node::SharedPtr & node, const std::string & topic, 
+        const std::string & subscribe_namespace, int zstd_compression_level = 3, bool publish_stale_data = false);
 
     /**
      * @brief Retrieves the data stored in the subscription manager.
@@ -49,10 +51,8 @@ protected:
      * It takes a string parameter representing the topic to subscribe to.
      * This function is called automatically in the constructor and get_data() method.
      * It fails if the topic does not exist or if there are no publishers on this topic.
-     * 
-     * @param topic The topic to subscribe to.
      */
-    void setup_subscription(const std::string & topic);
+    void setup_subscription();
 
     /**
      * @brief Callback function for handling serialized messages.
@@ -79,6 +79,11 @@ public:
      * @brief The topic name for the subscription.
      */
     std::string topic_;
+
+    /**
+     * @brief The namespace for the subscription.
+     */
+    std::string subscribe_namespace_;
 
     /**
      * @brief The compression level used for Zstandard compression (1->22).

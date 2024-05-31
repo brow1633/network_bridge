@@ -40,16 +40,29 @@ void Ros2Tether::load_parameters()
     this->get_parameter("default_rate", default_rate);
     this->get_parameter("default_zstd_level", default_zstd_level);
 
-    this->declare_parameter("namespace", "");
-    this->get_parameter("namespace", namespace_);
-    if (!namespace_.empty()) {
-        if (namespace_.front() != '/') {
-            namespace_.insert(0, "/");
+    this->declare_parameter("publish_namespace", "");
+    this->get_parameter("publish_namespace", publish_namespace_);
+    if (!publish_namespace_.empty()) {
+        if (publish_namespace_.front() != '/') {
+            publish_namespace_.insert(0, "/");
         }
-        if (namespace_.back() == '/') {
-            namespace_.pop_back();
+        if (publish_namespace_.back() == '/') {
+            publish_namespace_.pop_back();
         }
-        RCLCPP_INFO(this->get_logger(), "Topics will be published under the namespace %s", namespace_.c_str());
+        RCLCPP_INFO(this->get_logger(), "Topics will be published under the namespace %s", publish_namespace_.c_str());
+    }
+
+    std::string subscribe_namespace;
+    this->declare_parameter("subscribe_namespace", "");
+    this->get_parameter("subscribe_namespace", subscribe_namespace);
+    if (!subscribe_namespace.empty()) {
+        if (subscribe_namespace.front() != '/') {
+            subscribe_namespace.insert(0, "/");
+        }
+        if (subscribe_namespace.back() == '/') {
+            subscribe_namespace.pop_back();
+        }
+        RCLCPP_INFO(this->get_logger(), "Topics will be subscribed to under the namespace %s", subscribe_namespace.c_str());
     }
 
     // Load topics information
@@ -70,7 +83,7 @@ void Ros2Tether::load_parameters()
         this->get_parameter(rate_param_name, rate);
         this->get_parameter(zstd_level_param_name, zstd_level);
 
-        auto manager = std::make_shared<SubscriptionManager>(shared_from_this(), topic, zstd_level, publish_stale_data);
+        auto manager = std::make_shared<SubscriptionManager>(shared_from_this(), topic, subscribe_namespace, zstd_level, publish_stale_data);
         sub_mgrs_.push_back(manager);
 
         int ms = static_cast<int>(1000.0 / rate);
@@ -134,7 +147,7 @@ void Ros2Tether::receive_data(std::span<const uint8_t> data)
 
         // Set QoS to Transient Local Durability
         qos.transient_local();
-        publishers_[topic] = this->create_generic_publisher(namespace_ + topic, type, qos);
+        publishers_[topic] = this->create_generic_publisher(publish_namespace_ + topic, type, qos);
     }
 
     rclcpp::SerializedMessage msg(payload.size());

@@ -4,9 +4,9 @@
     network_interface: "ros2_tether::TcpInterface"
   
     TcpInterface:
-      role: "client"
-      remote_address: "127.0.0.1"
-      port: 5000
+      role: "client" # "client" or "server"
+      remote_address: "127.0.0.1" # IP of the server
+      port: 5000 # Desired port to connect to
     
     default_rate: 100.0
 
@@ -17,4 +17,5 @@
     topics:
       - "/MyDefaultTopic2"
 
-    namespace: "/tcp2"
+    subscribe_namespace: "/tcp2"
+    publish_namespace: "/tcp2"
