@@ -7,7 +7,7 @@ Simply clone the repository into your ROS2 workspace and build with `colcon buil
 ## Usage
 
 ### Demo
-#### UDP
+#### TCP
 ```
 ros2 launch ros2_tether tcp.launch.py`
 
@@ -16,7 +16,7 @@ ros2 topic pub /tcp1/MyDefaultTopic std_msgs/msg/String "data: 'Hello World'"
 ros2 topic echo /tcp2/MyDefaultTopic
 ```
 
-#### TCP
+#### UDP
 ```
 ros2 launch ros2_tether udp.launch.py
 
