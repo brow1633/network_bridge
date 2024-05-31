@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2024 Ethan M Brown
+// This file is part of ROS2 Tether, distributed under the MIT License.
+// For full terms, see the included LICENSE.txt file.
+
 #include <boost/asio/steady_timer.hpp>
 
 #include "network_interfaces/tcp_interface.hpp"

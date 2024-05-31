@@ -88,11 +88,7 @@ void Ros2Tether::load_network_interface()
 {
     try {
         network_interface_ = loader_.createSharedInstance(network_interface_name_);
-        network_interface_->initialize(shared_from_this(), 
-            [this](std::span<const uint8_t> data) {
-                receive_data(data);
-            }
-        );
+        network_interface_->initialize(shared_from_this(), std::bind(&Ros2Tether::receive_data, this, std::placeholders::_1));
 
         RCLCPP_INFO(this->get_logger(), "Loaded network interface: %s", network_interface_name_.c_str());
     } catch (const pluginlib::PluginlibException& ex) {
