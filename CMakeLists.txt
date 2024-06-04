@@ -8,7 +8,7 @@ endif()
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF) 
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -32,7 +32,7 @@ if(BUILD_TESTING)
   # the following line skips cpplint (only works in a git repo)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files
-  # set(ament_cmake_cpplint_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
   add_launch_test(
@@ -49,11 +49,11 @@ include_directories(include)
 
 add_executable(ros2_tether src/ros2_tether.cpp src/subscription_manager.cpp)
 
-add_library(udp_interface SHARED 
+add_library(udp_interface SHARED
   src/network_interfaces/udp_interface.cpp
 )
 
-add_library(tcp_interface SHARED 
+add_library(tcp_interface SHARED
   src/network_interfaces/tcp_interface.cpp
 )
 
