@@ -15,7 +15,6 @@
   <test_depend>ament_cmake_pytest</test_depend>
 
   <depend>asio</depend>
-  <depend>boost</depend>
   <depend>libzstd-dev</depend>
   <depend>std_msgs</depend>
 

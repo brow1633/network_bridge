@@ -13,7 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(Boost 1.65 REQUIRED COMPONENTS system iostreams)
 find_package(std_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(PkgConfig REQUIRED)
