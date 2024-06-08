@@ -32,28 +32,28 @@ SOFTWARE.
 #include <map>
 #include <rclcpp/rclcpp.hpp>
 
-#include "ros2_tether/subscription_manager.hpp"
+#include "network_bridge/subscription_manager.hpp"
 #include "network_interfaces/network_interface_base.hpp"
 
 /**
- * @class Ros2Tether
- * @brief A class that represents a ROS 2 tether for communication over network.
+ * @class NetworkBridge
+ * @brief A class that provides bridging of ROS2 topics over a network interface.
  *
- * The `Ros2Tether` class is derived from the `rclcpp::Node` class and provides functionality for sending and receiving telemetry data over network.
+ * The `NetworkBridge` class is derived from the `rclcpp::Node` class and provides functionality for sending and receiving telemetry data over network.
  * It handles the setup of a network interface, parsing and creating headers, compressing and decompressing data, and error handling.
  * The class also manages the ROS 2 subscriptions, timers, and publishers associated with the communication.
  */
-class Ros2Tether : public rclcpp::Node
+class NetworkBridge : public rclcpp::Node
 {
 public:
   /**
-   * @brief Constructs a Ros2Tether object.
+   * @brief Constructs a NetworkBridge object.
    *
-   * This constructor initializes a Ros2Tether object with the specified node name.
+   * This constructor initializes a NetworkBridge object with the specified node name.
    *
    * @param node_name The name of the ROS 2 node.
    */
-  explicit Ros2Tether(const std::string & node_name);
+  explicit NetworkBridge(const std::string & node_name);
 
   /**
    * @brief Loads parameters, loads network interface, and opens the network interface.
@@ -137,7 +137,7 @@ protected:
    *
    * @tparam InterfaceT The interface type that the loaded plugins must implement.
    */
-  pluginlib::ClassLoader<ros2_tether::NetworkInterface> loader_;
+  pluginlib::ClassLoader<network_bridge::NetworkInterface> loader_;
 
   /**
    * @brief The name of the network interface plugin.
@@ -145,9 +145,9 @@ protected:
   std::string network_interface_name_;
 
   /**
-   * @brief A shared pointer to an instance of the `ros2_tether::NetworkInterface` class.
+   * @brief A shared pointer to an instance of the `network_bridge::NetworkInterface` class.
    */
-  std::shared_ptr<ros2_tether::NetworkInterface> network_interface_;
+  std::shared_ptr<network_bridge::NetworkInterface> network_interface_;
 
   /**
    * @brief A vector of the SubscriptionManager's for each topic.

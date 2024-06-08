@@ -13,11 +13,11 @@ from rclpy.task import Future
 
 
 def generate_test_description():
-    config = get_package_share_directory('ros2_tether') + '/config/'
+    config = get_package_share_directory('network_bridge') + '/config/'
     return launch.LaunchDescription([
         launch_ros.actions.Node(
-            package='ros2_tether',
-            executable='ros2_tether',
+            package='network_bridge',
+            executable='network_bridge',
             name='udp1',
             output='screen',
             parameters=[config + 'Udp1.yaml'],
@@ -25,8 +25,8 @@ def generate_test_description():
                        'debug', '--log-level', 'rcl:=info'],
         ),
         launch_ros.actions.Node(
-            package='ros2_tether',
-            executable='ros2_tether',
+            package='network_bridge',
+            executable='network_bridge',
             name='udp2',
             output='screen',
             parameters=[config + 'Udp2.yaml'],

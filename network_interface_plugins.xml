@@ -1,16 +1,16 @@
 <class_libraries>
     <library path="udp_interface">
-        <class name="ros2_tether::UdpInterface" type="ros2_tether::UdpInterface" base_class_type="ros2_tether::NetworkInterface">
+        <class name="network_bridge::UdpInterface" type="network_bridge::UdpInterface" base_class_type="network_bridge::NetworkInterface">
             <description>
-                A UDP network interface for the ROS2 Tether.
+                A UDP network interface for the network bridge.
             </description>
         </class>
     </library>
 
     <library path="tcp_interface">
-        <class name="ros2_tether::TcpInterface" type="ros2_tether::TcpInterface" base_class_type="ros2_tether::NetworkInterface">
+        <class name="network_bridge::TcpInterface" type="network_bridge::TcpInterface" base_class_type="network_bridge::NetworkInterface">
             <description>
-                A TCP network interface for the ROS2 Tether.
+                A TCP network interface for the network bridge.
             </description>
         </class>
     </library>

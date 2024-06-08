@@ -25,7 +25,7 @@ SOFTWARE.
 */
 
 #include <rclcpp/qos.hpp>
-#include "ros2_tether/subscription_manager.hpp"
+#include "network_bridge/subscription_manager.hpp"
 
 SubscriptionManager::SubscriptionManager(
   const rclcpp::Node::SharedPtr & node, const std::string & topic,

@@ -5,14 +5,14 @@
     ###
     
     # Desired network_interface.  Current options:
-    # ros2_tether::UdpInterface 
+    # network_bridge::UdpInterface 
     #   - Quick but unreliable
     #   - Use for frequent data that you care about now (i.e. telemetry)
-    # ros2_tether::TcpInterface 
-    #   - Slow but reliable
+    # network_bridge::TcpInterface 
+    #   - Slower but reliable
     #   - Use for infrequent important communication (i.e. state transitions)
-    # NOTE: If you have both use cases, you can use two instances of ros2 tether
-    network_interface: "ros2_tether::UdpInterface"
+    # NOTE: If you have both use cases, you can use two instances of network_bridge
+    network_interface: "network_bridge::UdpInterface"
 
     UdpInterface:
       # This machines local IP (e.g. on LAN, VPN, etc)

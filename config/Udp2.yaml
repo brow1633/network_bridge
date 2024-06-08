@@ -1,7 +1,7 @@
 # See Udp1.yaml for parameter descriptions
 /**/*:
   ros__parameters:
-    network_interface: "ros2_tether::UdpInterface"
+    network_interface: "network_bridge::UdpInterface"
 
     UdpInterface:
       local_address: "127.0.0.1" #e.g. 10.8.0.2

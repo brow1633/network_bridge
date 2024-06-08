@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "network_interfaces/tcp_interface.hpp"
 
-namespace ros2_tether
+namespace network_bridge
 {
 
 void TcpInterface::initialize_()
@@ -201,6 +201,6 @@ void TcpInterface::write(const std::vector<uint8_t> & data)
   error_handler(ec, "Failed to write data");
 }
 
-}  // namespace ros2_tether
+}  // namespace network_bridge
 
-PLUGINLIB_EXPORT_CLASS(ros2_tether::TcpInterface, ros2_tether::NetworkInterface)
+PLUGINLIB_EXPORT_CLASS(network_bridge::TcpInterface, network_bridge::NetworkInterface)

@@ -35,7 +35,7 @@ SOFTWARE.
 
 #include "network_interfaces/network_interface_base.hpp"
 
-namespace ros2_tether
+namespace network_bridge
 {
 
 using boost::asio::ip::address;
@@ -148,4 +148,4 @@ protected:
   int send_port_;
 };
 
-}  // namespace ros2_tether
+}  // namespace network_bridge

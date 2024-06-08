@@ -35,7 +35,7 @@ SOFTWARE.
 #include "pluginlib/class_loader.hpp"
 #include "pluginlib/class_list_macros.hpp"
 
-namespace ros2_tether
+namespace network_bridge
 {
 
 /**
@@ -129,4 +129,4 @@ protected:
   std::function<void(std::span<const uint8_t>)> recv_cb_;
 };
 
-}  // namespace ros2_tether
+}  // namespace network_bridge

@@ -26,7 +26,7 @@ SOFTWARE.
 
 #include "network_interfaces/udp_interface.hpp"
 
-namespace ros2_tether
+namespace network_bridge
 {
 
 void UdpInterface::initialize_()
@@ -174,6 +174,6 @@ void UdpInterface::write(const std::vector<uint8_t> & data)
   error_handler(ec, "Failed to send data");
 }
 
-}  // namespace ros2_tether
+}  // namespace network_bridge
 
-PLUGINLIB_EXPORT_CLASS(ros2_tether::UdpInterface, ros2_tether::NetworkInterface)
+PLUGINLIB_EXPORT_CLASS(network_bridge::UdpInterface, network_bridge::NetworkInterface)

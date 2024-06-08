@@ -24,7 +24,7 @@ SOFTWARE.
 ==============================================================================
 */
 
-#include "ros2_tether/ros2_tether.hpp"
+#include "network_bridge/network_bridge.hpp"
 
 #include <zstd.h>
 #include <span>
@@ -37,22 +37,22 @@ SOFTWARE.
 
 #include "network_interfaces/network_interface_base.hpp"
 
-Ros2Tether::Ros2Tether(const std::string & node_name)
+NetworkBridge::NetworkBridge(const std::string & node_name)
 : Node(node_name),
-  loader_("ros2_tether", "ros2_tether::NetworkInterface") {}
+  loader_("network_bridge", "network_bridge::NetworkInterface") {}
 
-void Ros2Tether::initialize()
+void NetworkBridge::initialize()
 {
   load_parameters();
   load_network_interface();
   network_interface_->open();
 }
 
-void Ros2Tether::load_parameters()
+void NetworkBridge::load_parameters()
 {
   this->declare_parameter(
     "network_interface",
-    std::string("ros2_tether::UdpInterface"));
+    std::string("network_bridge::UdpInterface"));
   this->get_parameter("network_interface", network_interface_name_);
 
   bool publish_stale_data;
@@ -141,7 +141,7 @@ void Ros2Tether::load_parameters()
   }
 }
 
-void Ros2Tether::load_network_interface()
+void NetworkBridge::load_network_interface()
 {
   try {
     network_interface_ = loader_.createSharedInstance(network_interface_name_);
@@ -149,7 +149,7 @@ void Ros2Tether::load_network_interface()
     network_interface_->initialize(
       shared_from_this(),
       std::bind(
-        &Ros2Tether::receive_data,
+        &NetworkBridge::receive_data,
         this,
         std::placeholders::_1));
 
@@ -165,7 +165,7 @@ void Ros2Tether::load_network_interface()
   }
 }
 
-void Ros2Tether::receive_data(std::span<const uint8_t> data)
+void NetworkBridge::receive_data(std::span<const uint8_t> data)
 {
   auto now = std::chrono::system_clock::now();
 
@@ -232,7 +232,7 @@ void Ros2Tether::receive_data(std::span<const uint8_t> data)
     std::chrono::duration<double, std::milli>(end - now).count());
 }
 
-void Ros2Tether::send_data(std::shared_ptr<SubscriptionManager> manager)
+void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
 {
   const std::vector<uint8_t> & data = manager->get_data();
 
@@ -275,7 +275,7 @@ void Ros2Tether::send_data(std::shared_ptr<SubscriptionManager> manager)
     std::chrono::duration<double, std::milli>(end - now).count());
 }
 
-std::vector<uint8_t> Ros2Tether::create_header(
+std::vector<uint8_t> NetworkBridge::create_header(
   const std::string & topic,
   const std::string & msg_type)
 {
@@ -300,7 +300,7 @@ std::vector<uint8_t> Ros2Tether::create_header(
   return header;
 }
 
-void Ros2Tether::parse_header(
+void NetworkBridge::parse_header(
   const std::vector<uint8_t> & header,
   std::string & topic, std::string & msg_type,
   double & time)
@@ -318,7 +318,7 @@ void Ros2Tether::parse_header(
     header.data() + sizeof(time) + topic.size() + 1);
 }
 
-void Ros2Tether::compress(
+void NetworkBridge::compress(
   std::vector<uint8_t> const & data,
   std::vector<uint8_t> & compressed_data,
   int zstd_compression_level)
@@ -342,7 +342,7 @@ void Ros2Tether::compress(
   compressed_data.resize(compressedSize);
 }
 
-void Ros2Tether::decompress(
+void NetworkBridge::decompress(
   std::span<const uint8_t> compressed_data,
   std::vector<uint8_t> & data)
 {
@@ -376,8 +376,8 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   // Randomized name to avoid conflicts
   std::srand(std::time(nullptr));
-  std::string node_name = "ros2_tether" + std::to_string(std::rand());
-  auto node = std::make_shared<Ros2Tether>(node_name);
+  std::string node_name = "network_bridge" + std::to_string(std::rand());
+  auto node = std::make_shared<NetworkBridge>(node_name);
 
   node->initialize();
   rclcpp::spin(node);

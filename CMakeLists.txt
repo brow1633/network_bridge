@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(ros2_tether)
+project(network_bridge)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -47,7 +47,7 @@ endif()
 
 include_directories(include)
 
-add_executable(ros2_tether src/ros2_tether.cpp src/subscription_manager.cpp)
+add_executable(network_bridge src/network_bridge.cpp src/subscription_manager.cpp)
 
 add_library(udp_interface SHARED
   src/network_interfaces/udp_interface.cpp
@@ -57,18 +57,18 @@ add_library(tcp_interface SHARED
   src/network_interfaces/tcp_interface.cpp
 )
 
-ament_target_dependencies(ros2_tether pluginlib rclcpp std_msgs)
+ament_target_dependencies(network_bridge pluginlib rclcpp std_msgs)
 ament_target_dependencies(udp_interface pluginlib rclcpp)
 ament_target_dependencies(tcp_interface pluginlib rclcpp)
 
-target_link_libraries(ros2_tether ${ZSTD_LIBRARIES})
+target_link_libraries(network_bridge ${ZSTD_LIBRARIES})
 target_link_libraries(udp_interface ${Boost_LIBRARIES})
 target_link_libraries(tcp_interface ${Boost_LIBRARIES})
 
-pluginlib_export_plugin_description_file(ros2_tether network_interface_plugins.xml)
+pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)
 
 install(TARGETS
-  ros2_tether
+  network_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 

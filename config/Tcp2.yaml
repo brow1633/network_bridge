@@ -1,7 +1,7 @@
 # See Udp1.yaml for parameter descriptions
 /**/*:
   ros__parameters:
-    network_interface: "ros2_tether::TcpInterface"
+    network_interface: "network_bridge::TcpInterface"
   
     TcpInterface:
       role: "client" # "client" or "server"
