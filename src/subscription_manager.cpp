@@ -92,13 +92,13 @@ void SubscriptionManager::setup_subscription()
   subscriber = node_->create_generic_subscription(
     topic, msg_type_, qos,
     [this](
-      const std::shared_ptr<rclcpp::SerializedMessage> & serialized_msg) {
+      const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg) {
       this->callback(serialized_msg);
     });
 }
 
 void SubscriptionManager::callback(
-  const std::shared_ptr<rclcpp::SerializedMessage> & serialized_msg)
+  const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg)
 {
   RCLCPP_DEBUG(
     node_->get_logger(),

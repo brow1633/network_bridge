@@ -88,7 +88,7 @@ protected:
    * @param serialized_msg A shared pointer to the serialized message.
    */
   void callback(
-    const std::shared_ptr<rclcpp::SerializedMessage> & serialized_msg);
+    const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg);
 
   /**
    * @brief Pointer to the ROS 2 node.
