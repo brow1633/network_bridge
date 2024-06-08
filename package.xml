@@ -16,7 +16,7 @@
   <test_depend>launch_testing_ament_cmake</test_depend>
 
   <depend>rclcpp</depend>
-  <depend>asio</depend>
+  <depend>libboost-system-dev</depend>
   <depend>libzstd-dev</depend>
   <depend>std_msgs</depend>
   <depend>pluginlib</depend>
