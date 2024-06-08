@@ -29,6 +29,7 @@ SOFTWARE.
 #include <zstd.h>
 #include <span>
 #include <fstream>
+#include <bit>
 
 #include <rclcpp/serialization.hpp>
 #include <pluginlib/class_loader.hpp>
@@ -163,13 +164,20 @@ void Ros2Tether::load_network_interface()
     exit(1);
   }
 }
+
 void Ros2Tether::receive_data(std::span<const uint8_t> data)
 {
   auto now = std::chrono::system_clock::now();
 
   // Decompress data
   std::vector<uint8_t> decompressed_data;
-  decompress(data, decompressed_data);
+  try {
+    decompress(data, decompressed_data);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Decompression Failed: %s", e.what());
+  }
 
   std::string topic;
   std::string type;
@@ -249,7 +257,14 @@ void Ros2Tether::send_data(std::shared_ptr<SubscriptionManager> manager)
 
   // Compress data
   std::vector<uint8_t> compressed_data;
-  compress(message, compressed_data, manager->zstd_compression_level_);
+  try {
+    compress(message, compressed_data, manager->zstd_compression_level_);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Compression Failed: %s", e.what());
+    return;
+  }
 
   // Send data
   network_interface_->write(compressed_data);
@@ -265,16 +280,17 @@ std::vector<uint8_t> Ros2Tether::create_header(
   const std::string & msg_type)
 {
   double current_time = rclcpp::Clock().now().seconds();
+  auto current_time_bytes =
+    std::bit_cast<std::array<uint8_t, sizeof(current_time)>>(current_time);
+
+  int header_length =
+    current_time_bytes.size() + topic.size() + 1 + msg_type.size() + 1;
 
   std::vector<uint8_t> header;
-  int header_length = sizeof(current_time) +
-    topic.size() + 1 + msg_type.size() + 1;
   header.reserve(header_length);
 
-  auto current_time_ptr = reinterpret_cast<uint8_t *>(&current_time);
   header.insert(
-    header.end(), current_time_ptr,
-    current_time_ptr + sizeof(current_time));
+    header.end(), current_time_bytes.begin(), current_time_bytes.end());
 
   header.insert(header.end(), topic.begin(), topic.end());
   header.push_back('\0');
@@ -296,7 +312,7 @@ void Ros2Tether::parse_header(
     return;
   }
 
-  time = *reinterpret_cast<const double *>(header.data());
+  time = std::bit_cast<double>(header.data());
   topic = reinterpret_cast<const char *>(header.data() + sizeof(time));
   msg_type = reinterpret_cast<const char *>(
     header.data() + sizeof(time) + topic.size() + 1);
