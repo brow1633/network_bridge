@@ -1,15 +1,16 @@
-import launch
+import time
 import unittest
+
+from ament_index_python.packages import get_package_share_directory
+import launch
 import launch.actions
 import launch_ros.actions
-from ament_index_python.packages import get_package_share_directory
-import rclpy
-import time
-from rclpy.node import Node
 import launch_testing
-from std_msgs.msg import String
-
+import rclpy
+from rclpy.node import Node
 from rclpy.task import Future
+
+from std_msgs.msg import String
 
 
 def generate_test_description():
@@ -73,7 +74,7 @@ class TestUdp(unittest.TestCase):
         time.sleep(0.15)
 
         test_msg = String()
-        test_msg.data = "Testing123"
+        test_msg.data = 'Testing123'
         node.publish(test_msg)
 
         try:
@@ -81,11 +82,11 @@ class TestUdp(unittest.TestCase):
                 node, node.test_message_received, timeout_sec=10.0)
             self.assertTrue(
                 node.test_message_received.done(),
-                "Timeout on message receival.")
+                'Timeout on message receival.')
             self.assertEqual(
                 node.received_msg.data,
-                "Testing123",
-                "The received message did not match the expected output.")
+                'Testing123',
+                'The received message did not match the expected output.')
         finally:
             node.destroy_node()
 
