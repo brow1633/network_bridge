@@ -8,7 +8,6 @@
   <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>asio_cmake_module</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
@@ -16,7 +15,8 @@
   <test_depend>ament_cmake_pytest</test_depend>
 
   <depend>asio</depend>
-  <depend>io_context</depend>
+  <depend>boost</depend>
+  <depend>libzstd-dev</depend>
   <depend>std_msgs</depend>
 
 
