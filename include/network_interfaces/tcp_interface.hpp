@@ -54,7 +54,10 @@ class TcpInterface : public NetworkInterface
 {
 public:
   TcpInterface()
-  : NetworkInterface(), socket_(io_context_), acceptor_(io_context_) {}
+  : NetworkInterface(),
+    socket_(io_context_),
+    acceptor_(io_context_)
+  {}
 
   virtual ~TcpInterface()
   {
@@ -80,7 +83,7 @@ protected:
   void setup_client();
 
   void start_receive();
-  void receive(const boost::system::error_code & ec, std::size_t bytes_recvd);
+  void receive(size_t payload_size);
 
   /**
    * @brief Handles errors from the UDP interface.

@@ -101,7 +101,7 @@ void Ros2Tether::load_parameters()
 
   // Load topics information
   this->declare_parameter<std::vector<std::string>>(
-    "topics", 
+    "topics",
     std::vector<std::string>{});
 
   std::vector<std::string> topics;
@@ -126,7 +126,8 @@ void Ros2Tether::load_parameters()
     sub_mgrs_.push_back(manager);
 
     int ms = static_cast<int>(1000.0 / rate);
-    auto timer = this->create_wall_timer(std::chrono::milliseconds(ms),
+    auto timer = this->create_wall_timer(
+      std::chrono::milliseconds(ms),
       [this, manager]() {
         send_data(manager);
       });
@@ -144,10 +145,12 @@ void Ros2Tether::load_network_interface()
   try {
     network_interface_ = loader_.createSharedInstance(network_interface_name_);
 
-    network_interface_->initialize(shared_from_this(), 
-                                   std::bind(&Ros2Tether::receive_data,
-                                             this, 
-                                             std::placeholders::_1));
+    network_interface_->initialize(
+      shared_from_this(),
+      std::bind(
+        &Ros2Tether::receive_data,
+        this,
+        std::placeholders::_1));
 
     RCLCPP_INFO(
       this->get_logger(),
@@ -174,6 +177,7 @@ void Ros2Tether::receive_data(std::span<const uint8_t> data)
   parse_header(decompressed_data, topic, type, current_time);
 
   if (topic.empty() || type.empty()) {
+    RCLCPP_ERROR(this->get_logger(), "Malformed header!");
     return;
   }
 
@@ -256,8 +260,9 @@ void Ros2Tether::send_data(std::shared_ptr<SubscriptionManager> manager)
     std::chrono::duration<double, std::milli>(end - now).count());
 }
 
-std::vector<uint8_t> Ros2Tether::create_header(const std::string & topic, 
-                                               const std::string & msg_type)
+std::vector<uint8_t> Ros2Tether::create_header(
+  const std::string & topic,
+  const std::string & msg_type)
 {
   double current_time = rclcpp::Clock().now().seconds();
 
@@ -279,9 +284,10 @@ std::vector<uint8_t> Ros2Tether::create_header(const std::string & topic,
   return header;
 }
 
-void Ros2Tether::parse_header(const std::vector<uint8_t> & header, 
-                              std::string & topic, std::string & msg_type, 
-                              double & time)
+void Ros2Tether::parse_header(
+  const std::vector<uint8_t> & header,
+  std::string & topic, std::string & msg_type,
+  double & time)
 {
   // Add 4 for minimum usable header size
   // (1 char for topic, 1 for msg_type, and 2 null terminators)
@@ -296,9 +302,10 @@ void Ros2Tether::parse_header(const std::vector<uint8_t> & header,
     header.data() + sizeof(time) + topic.size() + 1);
 }
 
-void Ros2Tether::compress(std::vector<uint8_t> const & data, 
-                          std::vector<uint8_t> & compressed_data,
-                          int zstd_compression_level)
+void Ros2Tether::compress(
+  std::vector<uint8_t> const & data,
+  std::vector<uint8_t> & compressed_data,
+  int zstd_compression_level)
 {
   size_t compressedCapacity = ZSTD_compressBound(data.size());
 
@@ -319,8 +326,9 @@ void Ros2Tether::compress(std::vector<uint8_t> const & data,
   compressed_data.resize(compressedSize);
 }
 
-void Ros2Tether::decompress(std::span<const uint8_t> compressed_data, 
-                            std::vector<uint8_t> & data)
+void Ros2Tether::decompress(
+  std::span<const uint8_t> compressed_data,
+  std::vector<uint8_t> & data)
 {
   // Find the size of the original uncompressed data
   size_t decompressed_size = ZSTD_getFrameContentSize(

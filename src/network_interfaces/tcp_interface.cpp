@@ -121,29 +121,28 @@ void TcpInterface::setup_client()
     ec, "Failed to connect to server: check address and port.", fatal);
 
 
-  socket_.async_connect(
-    endpoint,
-    [this](const boost::system::error_code & ec) {
-      boost::asio::steady_timer timer(io_context_);
-      if (!ec) {
-        RCLCPP_INFO(
-          node_->get_logger(),
-          "Connected to server at %s:%u",
-          remote_address_.c_str(), port_);
-        start_receive();
-      } else {
-        RCLCPP_INFO(
-          node_->get_logger(),
-          "Failed to connect to server, retrying...");
-        timer.expires_after(std::chrono::milliseconds(100));
-        timer.async_wait(std::bind(&TcpInterface::setup_client, this));
-      }
-    });
+  while (true) {
+    socket_.connect(endpoint, ec);
+    if (!ec) {
+      RCLCPP_INFO(
+        node_->get_logger(),
+        "Connected to server at %s:%u",
+        remote_address_.c_str(), port_);
+      start_receive();
+      break;
+    } else {
+      RCLCPP_INFO(
+        node_->get_logger(),
+        "Failed to connect to server, retrying...");
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
 }
 
-void TcpInterface::error_handler(const boost::system::error_code & ec, 
-                                 const std::string & error_message,
-                                 bool fatal)
+void TcpInterface::error_handler(
+  const boost::system::error_code & ec,
+  const std::string & error_message,
+  bool fatal)
 {
   if (ec) {
     RCLCPP_ERROR(
@@ -160,34 +159,45 @@ void TcpInterface::error_handler(const boost::system::error_code & ec,
 
 void TcpInterface::start_receive()
 {
+  // async_receive will stop after filling buffer
+  // So we can receive a header followed by a payload
+  // note: this is an additional header for message size specific to TCP
+  auto header_buffer = boost::asio::buffer(receive_buffer_, sizeof(size_t));
   socket_.async_receive(
-    boost::asio::buffer(receive_buffer_),
+    header_buffer,
     [this](const boost::system::error_code & ec, std::size_t bytes_recvd) {
-      receive(ec, bytes_recvd);
+      if (!ec && bytes_recvd == sizeof(size_t)) {
+        size_t payload_size = *reinterpret_cast<size_t *>(receive_buffer_.data());
+        receive(payload_size);
+      } else {
+        error_handler(ec, "Failed to receive header");
+      }
     });
 }
 
-void TcpInterface::receive(const boost::system::error_code & ec, 
-                           std::size_t bytes_recvd)
+void TcpInterface::receive(size_t payload_size)
 {
-  if (bytes_recvd <= 0) {
-    start_receive();
-    return;
-  }
-
-  if (!ec) {
-    recv_cb_(std::span<const uint8_t>(receive_buffer_.data(), bytes_recvd));
-    start_receive();
-  } else {
-    error_handler(ec, "Failed to receive data");
-  }
+  auto body_buffer = boost::asio::buffer(receive_buffer_, payload_size);
+  socket_.async_receive(
+    body_buffer,
+    [this, payload_size](const boost::system::error_code & ec, std::size_t bytes_recvd) {
+      if (!ec && bytes_recvd == payload_size) {
+        recv_cb_(std::span<uint8_t>(receive_buffer_.data(), bytes_recvd));
+        start_receive();
+      } else {
+        error_handler(ec, "Failed to receive body");
+      }
+    });
 }
 
 void TcpInterface::write(const std::vector<uint8_t> & data)
 {
   boost::system::error_code ec;
 
-  socket_.write_some(boost::asio::buffer(data), ec);
+  // Sync write to block thread from sending multiple messages at once
+  size_t size = data.size();
+  socket_.write_some(boost::asio::buffer(&size, sizeof(size)), ec);
+  socket_.write_some(boost::asio::buffer(data, size), ec);
   error_handler(ec, "Failed to write data");
 }
 

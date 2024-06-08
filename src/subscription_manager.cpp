@@ -89,7 +89,8 @@ void SubscriptionManager::setup_subscription()
 
   msg_type_ = all_topics_and_types.at(topic)[0];
 
-  subscriber = node_->create_generic_subscription(topic, msg_type_, qos,
+  subscriber = node_->create_generic_subscription(
+    topic, msg_type_, qos,
     [this](
       const std::shared_ptr<rclcpp::SerializedMessage> & serialized_msg) {
       this->callback(serialized_msg);

@@ -118,9 +118,10 @@ void UdpInterface::setup_udp()
   start_receive();
 }
 
-void UdpInterface::error_handler(const boost::system::error_code & ec, 
-                                 const std::string & error_message,
-                                 bool fatal)
+void UdpInterface::error_handler(
+  const boost::system::error_code & ec,
+  const std::string & error_message,
+  bool fatal)
 {
   if (ec) {
     RCLCPP_ERROR(
@@ -144,8 +145,9 @@ void UdpInterface::start_receive()
       boost::asio::placeholders::bytes_transferred));
 }
 
-void UdpInterface::receive(const boost::system::error_code & ec, 
-                           std::size_t bytes_recvd)
+void UdpInterface::receive(
+  const boost::system::error_code & ec,
+  std::size_t bytes_recvd)
 {
   if (bytes_recvd <= 0) {
     start_receive();
