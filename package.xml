@@ -8,15 +8,20 @@
   <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>PkgConfig</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>launch_testing_ros</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
 
+  <depend>rclcpp</depend>
   <depend>asio</depend>
   <depend>libzstd-dev</depend>
   <depend>std_msgs</depend>
+  <depend>pluginlib</depend>
 
 
   <export>

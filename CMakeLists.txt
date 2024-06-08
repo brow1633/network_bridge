@@ -15,15 +15,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(PkgConfig REQUIRED)
 find_package(launch_testing_ament_cmake REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 pkg_check_modules(ZSTD REQUIRED libzstd)
-
-include_directories(${Boost_INCLUDE_DIRS} ${ZSTD_INCLUDE_DIRS})
-
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
