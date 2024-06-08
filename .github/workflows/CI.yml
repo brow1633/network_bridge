@@ -5,9 +5,11 @@ name: CI
 
 on: # this determines when this workflow is run
   push:
-    branches: [ main ] #  when master or melodic-devel branch is pushed to
+    branches: [ main ]
   pull_request:
-    branches: [ main ] # when there is a pull request against master
+    branches: [ main ]
+  release:
+    types: [ created ]
 
 
 jobs:
@@ -15,8 +17,8 @@ jobs:
     name: ROS ${{ matrix.ROS_DISTRO }} (${{ matrix.ROS_REPO }})
     runs-on: ubuntu-latest
     strategy:
-      # fail-fast: false # uncomment if failing jobs should not cancel the others immediately
-      matrix: # matrix is the product of entries
+      fail-fast: false
+      matrix:
         ROS_DISTRO: [humble, iron, jazzy, rolling]
         ROS_REPO: [main, testing]
         
