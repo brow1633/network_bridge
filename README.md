@@ -11,7 +11,7 @@ Simply clone the repository into your ROS2 workspace and build with `colcon buil
 ### Demo
 #### TCP
 ```
-ros2 launch network_bridge tcp.launch.py`
+ros2 launch network_bridge tcp.launch.py
 
 ros2 topic pub /tcp1/MyDefaultTopic std_msgs/msg/String "data: 'Hello World'"
 
@@ -27,7 +27,7 @@ ros2 topic pub /udp1/MyDefaultTopic std_msgs/msg/String "data: 'Hello World'"
 ros2 topic echo /udp2/MyDefaultTopic
 ```
 ### Configuration
-This package has a simple configuration file format that facilitates easy integration.  Simply setup the network interface parameters and list your desired topics to get started.  If you are using this over cellular data, it is recommended to setup a VPN to facilitate connection.
+Simply setup the network interface parameters and list your desired topics to get started.  If you are using UDP over cellular data, it is recommended to setup a VPN to facilitate connection.  Also, please note that **no encryption** occurs within this package.  Currently, if you would like encryption, you must use a VPN.
 
 See `config/Udp1.yaml` for a description of all parameters, as well as the TCP example configuration files.
 #### Minimal Example
