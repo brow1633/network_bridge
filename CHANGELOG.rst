@@ -2,6 +2,11 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Move launch_testing_ament_cmake requirement to if testing block
+* Contributors: Ethan Brown
+
 1.0.1 (2024-07-10)
 ------------------
 * Merge branch 'main' of github.com:brow1633/tether
