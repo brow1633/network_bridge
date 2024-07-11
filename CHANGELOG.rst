@@ -2,8 +2,8 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2024-07-10)
+------------------
 * Move launch_testing_ament_cmake requirement to if testing block
 * Contributors: Ethan Brown
 
