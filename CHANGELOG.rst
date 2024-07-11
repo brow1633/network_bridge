@@ -2,8 +2,8 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2024-07-10)
+------------------
 * Merge branch 'main' of github.com:brow1633/tether
 * Updated package.xml deps
 * Update README.md
