@@ -88,9 +88,13 @@ bool TcpInterface::has_failed() const {
 
 void TcpInterface::close()
 {
-    acceptor_->close();
+    if (acceptor_) {
+        acceptor_->close();
+    }
     acceptor_.reset();
-    socket_->close();
+    if (socket_) {
+        socket_->close();
+    }
     socket_.reset();
     stream_.shutdown();
     try {
@@ -213,6 +217,7 @@ void TcpInterface::setup_client()
             ec, "Failed to connect to server: check address and port.", fatal);
 
 
+    socket_.reset(new tcp::socket(io_context_));
     while (true) {
         socket_->connect(endpoint, ec);
         if (!ec) {
