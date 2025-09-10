@@ -34,6 +34,7 @@ SOFTWARE.
 #include <boost/bind/bind.hpp>
 
 #include "network_interfaces/network_interface_base.hpp"
+#include "network_bridge/thrift_stream_queue.hpp"
 
 namespace network_bridge
 {
@@ -83,7 +84,8 @@ protected:
   void setup_client();
 
   void start_receive();
-  void receive(size_t payload_size);
+  void receive(const boost::system::error_code& error, size_t rlen);
+  void receive_thread();
 
   /**
    * @brief Handles errors from the UDP interface.
@@ -105,6 +107,11 @@ private:
   tcp::socket socket_;
   tcp::acceptor acceptor_;
   std::thread io_thread_;
+  std::thread packet_thread_;
+
+  std::array<uint8_t,16384> receive_buf_;
+  network_bridge::QueueStream stream_;
+
 };
 
 }  // namespace network_bridge

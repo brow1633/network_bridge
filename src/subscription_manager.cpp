@@ -51,7 +51,7 @@ void SubscriptionManager::setup_subscription()
   std::string topic = subscribe_namespace_ + topic_;
 
   if (all_topics_and_types.find(topic) == all_topics_and_types.end()) {
-    RCLCPP_DEBUG(node_->get_logger(), "Topic %s not found", topic.c_str());
+    RCLCPP_WARN(node_->get_logger(), "Topic %s not found", topic.c_str());
     return;
   }
 
@@ -59,7 +59,7 @@ void SubscriptionManager::setup_subscription()
   auto topic_info = node_->get_publishers_info_by_topic(topic);
 
   if (topic_info.size() == 0) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       node_->get_logger(),
       "No publishers found for topic %s", topic.c_str());
     return;
@@ -114,14 +114,14 @@ const std::vector<uint8_t> & SubscriptionManager::get_data()
 {
   if (!subscriber) {
     setup_subscription();
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       node_->get_logger(),
       "Send Timer: Subscriber is not set");
     return data_;
   }
 
   if (!received_msg_) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       node_->get_logger(),
       "Send Timer: No message ever received");
     return data_;
@@ -129,7 +129,7 @@ const std::vector<uint8_t> & SubscriptionManager::get_data()
 
 
   if (is_stale_ && !publish_stale_data_) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       node_->get_logger(),
       "Send Timer: Stored data is stale");
     data_.clear();
