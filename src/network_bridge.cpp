@@ -195,7 +195,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     decompressed_data.begin() + header_length, decompressed_data.end());
 
   float delay = rclcpp::Clock().now().seconds() - current_time;
-  RCLCPP_DEBUG(
+  RCLCPP_INFO(
     this->get_logger(),
     "Received %lu bytes on topic %s with type %s",
     data.size(), topic.c_str(), type.c_str());
@@ -215,6 +215,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     qos.transient_local();
     publishers_[topic] = this->create_generic_publisher(
       publish_namespace_ + topic, type, qos);
+    RCLCPP_DEBUG(this->get_logger(), "Created publisher on %s type %s",(publish_namespace_+topic).c_str(),type.c_str());
   }
 
   rclcpp::SerializedMessage msg(payload.size());
@@ -237,7 +238,7 @@ void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
   const std::vector<uint8_t> & data = manager->get_data();
 
   if (data.empty()) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       this->get_logger(),
       "SubscriptionManager %s has no data", manager->topic_.c_str());
     return;

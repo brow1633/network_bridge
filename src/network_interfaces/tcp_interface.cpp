@@ -70,12 +70,70 @@ void TcpInterface::open()
     [this]() {
       io_context_.run();
     });
+
+  packet_thread_ = std::thread(std::bind(&TcpInterface::receive_thread,this));
 }
 
 void TcpInterface::close()
 {
-  io_context_.stop();
-  io_thread_.join();
+    stream_.shutdown();
+    packet_thread_.join();
+    io_context_.stop();
+    io_thread_.join();
+}
+
+void TcpInterface::receive_thread() {
+    uint8_t state = 0;
+    while (!stream_.is_shutdown()) {
+        uint8_t start1,start2;
+        uint32_t payload_size;
+        std::vector<uint8_t> payload;
+        switch (state) {
+            case 0:
+                if (!stream_.readUint8(start1)) {
+                    RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive first start packet");
+                    break;
+                }
+                if (start1==0xAB) {
+                    state=1;
+                }
+                break;
+            case 1:
+                if (!stream_.readUint8(start2)) {
+                    RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive second start packet");
+                    state=0;
+                    break;
+                }
+                if (start2==0xCD) {
+                    state=2;
+                } else if (start2==0xAB) {
+                    state=1;
+                } else {
+                    RCLCPP_ERROR( node_->get_logger(), "invalid second start packet");
+                    state=0;
+                }
+                break;
+            case 2:
+                if (!stream_.readUint32(payload_size)) {
+                    RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive payload size");
+                    state = 0;
+                    break;
+                }
+                state=3;
+                break;
+            case 3:
+                if (stream_.readBytes(payload,payload_size)!=payload_size) {
+                    RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive payload");
+                    state = 0;
+                    break;
+                }
+                recv_cb_(std::span<uint8_t>(payload.data(), payload_size));
+                state = 0;
+                break;
+            default:
+                state = 0;
+        }
+    }
 }
 
 void TcpInterface::setup_server()
@@ -159,46 +217,42 @@ void TcpInterface::error_handler(
 
 void TcpInterface::start_receive()
 {
-  // async_receive will stop after filling buffer
-  // So we can receive a header followed by a payload
-  // note: this is an additional header for message size specific to TCP
-  auto header_buffer = boost::asio::buffer(receive_buffer_, sizeof(size_t));
-  socket_.async_receive(
-    header_buffer,
-    [this](const boost::system::error_code & ec, std::size_t bytes_recvd) {
-      if (!ec && bytes_recvd == sizeof(size_t)) {
-        size_t payload_size = *reinterpret_cast<size_t *>(receive_buffer_.data());
-        receive(payload_size);
-      } else {
-        error_handler(ec, "Failed to receive header");
-      }
-    });
+  socket_.async_read_some(boost::asio::buffer(receive_buffer_), 
+          boost::bind(&TcpInterface::receive,this,
+              boost::asio::placeholders::error,
+              boost::asio::placeholders::bytes_transferred));
 }
 
-void TcpInterface::receive(size_t payload_size)
-{
-  auto body_buffer = boost::asio::buffer(receive_buffer_, payload_size);
-  socket_.async_receive(
-    body_buffer,
-    [this, payload_size](const boost::system::error_code & ec, std::size_t bytes_recvd) {
-      if (!ec && bytes_recvd == payload_size) {
-        recv_cb_(std::span<uint8_t>(receive_buffer_.data(), bytes_recvd));
+void TcpInterface::receive(const boost::system::error_code& error, size_t rlen) {
+    if (!error) {
+        stream_.pushBytes(receive_buf_.begin(),receive_buf_.begin()+rlen);
         start_receive();
-      } else {
-        error_handler(ec, "Failed to receive body");
-      }
-    });
+    } else {
+        error_handler(error, "Failed to receive buffer");
+        // std::cerr << "out->in: connection error" << std::endl;
+    }
 }
 
 void TcpInterface::write(const std::vector<uint8_t> & data)
 {
-  boost::system::error_code ec;
-
-  // Sync write to block thread from sending multiple messages at once
-  size_t size = data.size();
-  socket_.write_some(boost::asio::buffer(&size, sizeof(size)), ec);
-  socket_.write_some(boost::asio::buffer(data, size), ec);
-  error_handler(ec, "Failed to write data");
+    try {
+        // Sync write to block thread from sending multiple messages at once
+        uint8_t start[2]={0xAB,0xCD};
+        boost::asio::write(socket_,boost::asio::buffer(start, 2));
+        uint32_t size = data.size();
+        boost::asio::write(socket_,boost::asio::buffer(&size, sizeof(size)));
+        boost::asio::write(socket_,boost::asio::buffer(data, size));
+#if 0
+        RCLCPP_INFO(node_->get_logger(),"wrote 6 + %d bytes %02X %02X %d %02X %02X %02X %02X",int(size),
+                start[0],start[1],size,
+                (size>0)?data[0]:0,
+                (size>1)?data[1]:0,
+                (size>2)?data[2]:0,
+                (size>3)?data[3]:0);
+#endif
+    } catch (std::exception&) {
+        RCLCPP_WARN(node_->get_logger(),"Exception while writing data");
+    }
 }
 
 }  // namespace network_bridge
