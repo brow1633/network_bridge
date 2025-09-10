@@ -195,7 +195,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     decompressed_data.begin() + header_length, decompressed_data.end());
 
   float delay = rclcpp::Clock().now().seconds() - current_time;
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(),
     "Received %lu bytes on topic %s with type %s",
     data.size(), topic.c_str(), type.c_str());

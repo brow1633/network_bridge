@@ -109,7 +109,7 @@ private:
   std::thread io_thread_;
   std::thread packet_thread_;
 
-  std::array<char,16384> receive_buf_;
+  std::array<uint8_t,16384> receive_buf_;
   network_bridge::QueueStream stream_;
 
 };

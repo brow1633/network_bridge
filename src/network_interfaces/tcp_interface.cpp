@@ -84,10 +84,10 @@ void TcpInterface::close()
 
 void TcpInterface::receive_thread() {
     uint8_t state = 0;
+    uint8_t start1,start2;
+    uint32_t payload_size;
+    std::vector<uint8_t> payload;
     while (!stream_.is_shutdown()) {
-        uint8_t start1,start2;
-        uint32_t payload_size;
-        std::vector<uint8_t> payload;
         switch (state) {
             case 0:
                 if (!stream_.readUint8(start1)) {
@@ -99,6 +99,7 @@ void TcpInterface::receive_thread() {
                 }
                 break;
             case 1:
+                // RCLCPP_INFO(node_->get_logger(),"State 1");
                 if (!stream_.readUint8(start2)) {
                     RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive second start packet");
                     state=0;
@@ -114,19 +115,25 @@ void TcpInterface::receive_thread() {
                 }
                 break;
             case 2:
+                // RCLCPP_INFO(node_->get_logger(),"State 2");
+                payload_size = 0;
                 if (!stream_.readUint32(payload_size)) {
                     RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive payload size");
                     state = 0;
                     break;
                 }
+                payload_size = htonl(payload_size);
                 state=3;
                 break;
             case 3:
-                if (stream_.readBytes(payload,payload_size)!=payload_size) {
+                // RCLCPP_INFO(node_->get_logger(),"State 3: waiting for %u bytes",payload_size);
+                payload.clear();
+                if (!stream_.readBytes(payload,payload_size)) {
                     RCLCPP_ERROR( node_->get_logger(), "Receive thread could not receive payload");
                     state = 0;
                     break;
                 }
+                // RCLCPP_INFO(node_->get_logger(),"Received full payload of %d bytes",payload_size);
                 recv_cb_(std::span<uint8_t>(payload.data(), payload_size));
                 state = 0;
                 break;
@@ -217,7 +224,7 @@ void TcpInterface::error_handler(
 
 void TcpInterface::start_receive()
 {
-  socket_.async_read_some(boost::asio::buffer(receive_buffer_), 
+  socket_.async_read_some(boost::asio::buffer(receive_buf_), 
           boost::bind(&TcpInterface::receive,this,
               boost::asio::placeholders::error,
               boost::asio::placeholders::bytes_transferred));
@@ -225,6 +232,13 @@ void TcpInterface::start_receive()
 
 void TcpInterface::receive(const boost::system::error_code& error, size_t rlen) {
     if (!error) {
+#if 0
+        RCLCPP_INFO(node_->get_logger(),"Received %d bytes %02X %02X %02X %02X",int(rlen),
+                (rlen>0)?receive_buf_[0]:0,
+                (rlen>1)?receive_buf_[1]:0,
+                (rlen>2)?receive_buf_[2]:0,
+                (rlen>3)?receive_buf_[3]:0);
+#endif
         stream_.pushBytes(receive_buf_.begin(),receive_buf_.begin()+rlen);
         start_receive();
     } else {
