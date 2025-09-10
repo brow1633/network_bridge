@@ -88,6 +88,8 @@ protected:
   virtual void initialize_() = 0;
 
 public:
+  virtual bool has_failed() const = 0;
+  virtual bool is_ready() const = 0;
   /**
    * @brief Opens the network connection.
    *

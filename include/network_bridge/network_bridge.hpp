@@ -87,6 +87,8 @@ protected:
    */
   virtual void send_data(std::shared_ptr<SubscriptionManager> manager);
 
+
+  void check_network_health();
   /**
    * @brief Creates a header for the message.
    *
@@ -165,6 +167,7 @@ protected:
    */
   std::vector<rclcpp::TimerBase::SharedPtr> timers_;
 
+  rclcpp::TimerBase::SharedPtr network_check_timer_;
   /**
    * @brief A map that stores the publisher object against the topic name.
    */

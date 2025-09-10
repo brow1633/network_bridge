@@ -56,6 +56,9 @@ void TcpInterface::load_parameters()
 
 void TcpInterface::open()
 {
+    failed_ = false;
+    ready_ = false;
+    io_context_.restart();
   if (role_ == "server") {
     setup_server();
   } else if (role_ == "client") {
@@ -74,12 +77,31 @@ void TcpInterface::open()
   packet_thread_ = std::thread(std::bind(&TcpInterface::receive_thread,this));
 }
 
+bool TcpInterface::is_ready() const {
+    return ready_ && !failed_;
+}
+
+bool TcpInterface::has_failed() const {
+    return failed_;
+}
+
+
 void TcpInterface::close()
 {
+    acceptor_->close();
+    acceptor_.reset();
+    socket_->close();
+    socket_.reset();
     stream_.shutdown();
-    packet_thread_.join();
+    try {
+        packet_thread_.join();
+    } catch (std::system_error&) {
+    }
     io_context_.stop();
-    io_thread_.join();
+    try {
+        io_thread_.join();
+    } catch (std::system_error&) {
+    }
 }
 
 void TcpInterface::receive_thread() {
@@ -145,63 +167,66 @@ void TcpInterface::receive_thread() {
 
 void TcpInterface::setup_server()
 {
-  boost::system::error_code ec;
-  bool fatal = true;
+    boost::system::error_code ec;
+    bool fatal = true;
 
-  tcp::endpoint endpoint(tcp::v4(), port_);
+    tcp::endpoint endpoint(tcp::v4(), port_);
 
-  acceptor_.open(endpoint.protocol(), ec);
-  error_handler(ec, "Failed to open acceptor", fatal);
+    socket_.reset(new tcp::socket(io_context_));
+    acceptor_.reset(new tcp::acceptor(io_context_));
 
-  acceptor_.set_option(tcp::acceptor::reuse_address(true), ec);
-  error_handler(ec, "Failed to set acceptor option", fatal);
+    acceptor_->open(endpoint.protocol(), ec);
+    error_handler(ec, "Failed to open acceptor", fatal);
 
-  acceptor_.bind(endpoint, ec);
-  error_handler(ec, "Failed to bind acceptor", fatal);
+    acceptor_->set_option(tcp::acceptor::reuse_address(true), ec);
+    error_handler(ec, "Failed to set acceptor option", fatal);
 
-  acceptor_.listen(tcp::socket::max_listen_connections, ec);
-  error_handler(ec, "Failed to listen on acceptor", fatal);
+    acceptor_->bind(endpoint, ec);
+    error_handler(ec, "Failed to bind acceptor", fatal);
 
-  acceptor_.async_accept(
-    socket_,
-    [this](const boost::system::error_code & ec) {
-      error_handler(ec, "Failed to accept connection", true);
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Accepted connection from %s:%u",
-        socket_.remote_endpoint().address().to_string().c_str(),
-        socket_.remote_endpoint().port());
-      start_receive();
-    });
+    acceptor_->listen(tcp::socket::max_listen_connections, ec);
+    error_handler(ec, "Failed to listen on acceptor", fatal);
+
+    RCLCPP_INFO(node_->get_logger(),"Accepting connections");
+    acceptor_->async_accept(
+            *socket_,
+            [this](const boost::system::error_code & ec) {
+            error_handler(ec, "Failed to accept connection", true);
+            RCLCPP_INFO(
+                    node_->get_logger(),
+                    "Accepted connection from %s:%u",
+                    socket_->remote_endpoint().address().to_string().c_str(),
+                    socket_->remote_endpoint().port());
+            ready_ = true;
+            start_receive();
+            });
 }
 
 void TcpInterface::setup_client()
 {
-  boost::system::error_code ec;
-  bool fatal = true;
+    boost::system::error_code ec;
+    bool fatal = true;
 
-  tcp::endpoint endpoint(
-    address::from_string(remote_address_), port_);
-  error_handler(
-    ec, "Failed to connect to server: check address and port.", fatal);
+    tcp::endpoint endpoint(
+            address::from_string(remote_address_), port_);
+    error_handler(
+            ec, "Failed to connect to server: check address and port.", fatal);
 
 
-  while (true) {
-    socket_.connect(endpoint, ec);
-    if (!ec) {
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Connected to server at %s:%u",
-        remote_address_.c_str(), port_);
-      start_receive();
-      break;
-    } else {
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Failed to connect to server, retrying...");
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (true) {
+        socket_->connect(endpoint, ec);
+        if (!ec) {
+            RCLCPP_INFO( node_->get_logger(), "Connected to server at %s:%u",
+                    remote_address_.c_str(), port_);
+            ready_ = true;
+            start_receive();
+            break;
+        } else {
+            ready_ = false;
+            RCLCPP_INFO( node_->get_logger(), "Failed to connect to server, retrying...");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
     }
-  }
 }
 
 void TcpInterface::error_handler(
@@ -224,7 +249,7 @@ void TcpInterface::error_handler(
 
 void TcpInterface::start_receive()
 {
-  socket_.async_read_some(boost::asio::buffer(receive_buf_), 
+  socket_->async_read_some(boost::asio::buffer(receive_buf_), 
           boost::bind(&TcpInterface::receive,this,
               boost::asio::placeholders::error,
               boost::asio::placeholders::bytes_transferred));
@@ -242,6 +267,7 @@ void TcpInterface::receive(const boost::system::error_code& error, size_t rlen) 
         stream_.pushBytes(receive_buf_.begin(),receive_buf_.begin()+rlen);
         start_receive();
     } else {
+        failed_ = true;
         error_handler(error, "Failed to receive buffer");
         // std::cerr << "out->in: connection error" << std::endl;
     }
@@ -252,10 +278,10 @@ void TcpInterface::write(const std::vector<uint8_t> & data)
     try {
         // Sync write to block thread from sending multiple messages at once
         uint8_t start[2]={0xAB,0xCD};
-        boost::asio::write(socket_,boost::asio::buffer(start, 2));
+        boost::asio::write(*socket_,boost::asio::buffer(start, 2));
         uint32_t size = data.size();
-        boost::asio::write(socket_,boost::asio::buffer(&size, sizeof(size)));
-        boost::asio::write(socket_,boost::asio::buffer(data, size));
+        boost::asio::write(*socket_,boost::asio::buffer(&size, sizeof(size)));
+        boost::asio::write(*socket_,boost::asio::buffer(data, size));
 #if 0
         RCLCPP_INFO(node_->get_logger(),"wrote 6 + %d bytes %02X %02X %d %02X %02X %02X %02X",int(size),
                 start[0],start[1],size,
@@ -265,6 +291,7 @@ void TcpInterface::write(const std::vector<uint8_t> & data)
                 (size>3)?data[3]:0);
 #endif
     } catch (std::exception&) {
+        failed_ = true;
         RCLCPP_WARN(node_->get_logger(),"Exception while writing data");
     }
 }
