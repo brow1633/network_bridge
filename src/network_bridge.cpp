@@ -215,7 +215,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     qos.transient_local();
     publishers_[topic] = this->create_generic_publisher(
       publish_namespace_ + topic, type, qos);
-    RCLCPP_DEBUG(this->get_logger(), "Created publisher on %s type %s",(publish_namespace_+topic).c_str(),type.c_str());
+    RCLCPP_INFO(this->get_logger(), "Created publisher on %s type %s",(publish_namespace_+topic).c_str(),type.c_str());
   }
 
   rclcpp::SerializedMessage msg(payload.size());
