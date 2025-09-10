@@ -55,10 +55,11 @@ class TcpInterface : public NetworkInterface
 {
 public:
   TcpInterface()
-  : NetworkInterface(),
-    socket_(io_context_),
-    acceptor_(io_context_)
-  {}
+  : NetworkInterface()
+  {
+      ready_ = false;
+      failed_ = false;
+  }
 
   virtual ~TcpInterface()
   {
@@ -74,6 +75,8 @@ protected:
   void initialize_() override;
 
 public:
+  bool has_failed() const override;
+  bool is_ready() const override;
   void open() override;
   void close() override;
   void write(const std::vector<uint8_t> & data) override;
@@ -102,10 +105,12 @@ private:
   std::string role_;
   std::string remote_address_;
   int port_;
+  bool ready_;
+  bool failed_;
 
   io_context io_context_;
-  tcp::socket socket_;
-  tcp::acceptor acceptor_;
+  std::shared_ptr<tcp::socket> socket_;
+  std::shared_ptr<tcp::acceptor> acceptor_;
   std::thread io_thread_;
   std::thread packet_thread_;
 

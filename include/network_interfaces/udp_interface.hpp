@@ -72,6 +72,8 @@ protected:
   void initialize_() override;
 
 public:
+  bool has_failed() const override;
+  bool is_ready() const override;
   /**
    * @brief Opens the UDP interface.
    *

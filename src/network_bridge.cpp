@@ -139,6 +139,24 @@ void NetworkBridge::load_parameters()
       this->get_logger(),
       "Topic: %s, Rate: %f Hz", topic.c_str(), rate);
   }
+
+  network_check_timer_ = this->create_wall_timer(
+          std::chrono::milliseconds(500),
+          std::bind(&NetworkBridge::check_network_health,this));
+
+}
+
+void NetworkBridge::check_network_health() {
+    if (!network_interface_) {
+        initialize();
+        return;
+    }
+    if (network_interface_->has_failed()) {
+        RCLCPP_INFO(this->get_logger(),"Network interface has failed. Resetting");
+        network_interface_->close();
+        network_interface_->open();
+        return;
+    }
 }
 
 void NetworkBridge::load_network_interface()
@@ -235,6 +253,14 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
 
 void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
 {
+    manager->check_subscription();
+    if (!manager->has_data()) {
+        return;
+    }
+    if (!network_interface_->is_ready()) {
+        return;
+    }
+        
   const std::vector<uint8_t> & data = manager->get_data();
 
   if (data.empty()) {
