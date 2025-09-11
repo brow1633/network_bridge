@@ -89,6 +89,20 @@ protected:
 
 public:
   /**
+   * @brief Checks if the network connection has failed
+   *
+   * This method should be implemented by derived classes and return true if the connection
+   * needs to be reinitialised
+   */
+  virtual bool has_failed() const = 0;
+  /**
+   * @brief Checks if the network connection is ready
+   *
+   * This method should be implemented by derived classes and return true when the connection
+   * has been opened and has not failed
+   */
+  virtual bool is_ready() const = 0;
+  /**
    * @brief Opens the network connection.
    *
    * This method should be implemented by derived classes to establish the network connection.

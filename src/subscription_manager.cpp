@@ -1,28 +1,28 @@
 /*
-==============================================================================
-MIT License
+   ==============================================================================
+   MIT License
 
-Copyright (c) 2024 Ethan M Brown
+   Copyright (c) 2024 Ethan M Brown
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-==============================================================================
-*/
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+   ==============================================================================
+   */
 
 #include <rclcpp/qos.hpp>
 #include "network_bridge/subscription_manager.hpp"
@@ -41,6 +41,7 @@ SubscriptionManager::SubscriptionManager(
   publish_stale_data_(publish_stale_data),
   data_()
 {
+  topic_found_ = true;   // optimistic
   setup_subscription();
 }
 
@@ -51,7 +52,10 @@ void SubscriptionManager::setup_subscription()
   std::string topic = subscribe_namespace_ + topic_;
 
   if (all_topics_and_types.find(topic) == all_topics_and_types.end()) {
-    RCLCPP_DEBUG(node_->get_logger(), "Topic %s not found", topic.c_str());
+    if (topic_found_) {
+      RCLCPP_WARN(node_->get_logger(), "Topic %s not found", topic.c_str());
+    }
+    topic_found_ = false;
     return;
   }
 
@@ -59,12 +63,16 @@ void SubscriptionManager::setup_subscription()
   auto topic_info = node_->get_publishers_info_by_topic(topic);
 
   if (topic_info.size() == 0) {
-    RCLCPP_DEBUG(
-      node_->get_logger(),
-      "No publishers found for topic %s", topic.c_str());
+    if (topic_found_) {
+      RCLCPP_WARN(
+        node_->get_logger(),
+        "No publishers found for topic %s", topic.c_str());
+    }
+    topic_found_ = false;
     return;
   }
 
+  topic_found_ = true;
   auto qos_candidate = topic_info[0].qos_profile().get_rmw_qos_profile();
 
   rclcpp::QoS qos(rclcpp::QoSInitialization::from_rmw(qos_candidate));
@@ -110,28 +118,45 @@ void SubscriptionManager::callback(
   std::copy(buff, buff + serialized_msg->size(), data_.begin());
 }
 
+void SubscriptionManager::check_subscription()
+{
+  if (!subscriber) {
+    setup_subscription();
+  }
+}
+
+
+bool SubscriptionManager::has_data() const
+{
+  if (!subscriber) {
+    return false;
+  }
+  if (!received_msg_) {
+    return false;
+  }
+  if (is_stale_ && !publish_stale_data_) {
+    return false;
+  }
+  return true;
+}
+
+
 const std::vector<uint8_t> & SubscriptionManager::get_data()
 {
   if (!subscriber) {
     setup_subscription();
-    RCLCPP_DEBUG(
-      node_->get_logger(),
-      "Send Timer: Subscriber is not set");
+    RCLCPP_WARN(node_->get_logger(), "Send Timer: Subscriber is not set");
     return data_;
   }
 
   if (!received_msg_) {
-    RCLCPP_DEBUG(
-      node_->get_logger(),
-      "Send Timer: No message ever received");
+    RCLCPP_WARN(node_->get_logger(), "Send Timer: No message ever received");
     return data_;
   }
 
 
   if (is_stale_ && !publish_stale_data_) {
-    RCLCPP_DEBUG(
-      node_->get_logger(),
-      "Send Timer: Stored data is stale");
+    RCLCPP_WARN(node_->get_logger(), "Send Timer: Stored data is stale");
     data_.clear();
     return data_;
   }

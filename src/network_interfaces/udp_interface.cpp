@@ -34,6 +34,19 @@ void UdpInterface::initialize_()
   load_parameters();
 }
 
+bool UdpInterface::is_ready() const
+{
+  // Udp is always ready
+  return true;
+}
+
+bool UdpInterface::has_failed() const
+{
+  // can't detect it
+  return false;
+}
+
+
 void UdpInterface::open()
 {
   setup_udp();

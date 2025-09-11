@@ -68,6 +68,10 @@ public:
    */
   const std::vector<uint8_t> & get_data();
 
+  bool has_data() const;
+
+  void check_subscription();
+
 protected:
   /**
    * @brief Sets up a subscription for a given topic.
@@ -117,6 +121,7 @@ public:
   int zstd_compression_level_;
 
 protected:
+  bool topic_found_;
   /**
    * @brief Flag indicating whether a message has ever been received.
    */

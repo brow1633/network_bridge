@@ -87,6 +87,8 @@ protected:
    */
   virtual void send_data(std::shared_ptr<SubscriptionManager> manager);
 
+
+  void check_network_health();
   /**
    * @brief Creates a header for the message.
    *
@@ -159,12 +161,20 @@ protected:
   /**
    * @brief A vector of timers for sending each received topic over network.
    *
-   * These are stroed to keep them from going out of scope.
+   * These are stored to keep them from going out of scope.
    *
    * @see rclcpp::TimerBase
    */
   std::vector<rclcpp::TimerBase::SharedPtr> timers_;
 
+  /**
+   * @brief A time to check the network status, especially useful for tcp interface
+   *
+   * These are stored to keep them from going out of scope, but are not used directly.
+   *
+   * @see rclcpp::TimerBase
+   */
+  rclcpp::TimerBase::SharedPtr network_check_timer_;
   /**
    * @brief A map that stores the publisher object against the topic name.
    */
