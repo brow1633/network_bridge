@@ -39,6 +39,7 @@ def generate_test_description():
 
 
 class TcpTestNode(Node):
+    
     def __init__(self):
         super().__init__('test_node')
         self.test_message_received = Future()
