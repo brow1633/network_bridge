@@ -57,8 +57,8 @@ public:
   TcpInterface()
   : NetworkInterface()
   {
-      ready_ = false;
-      failed_ = false;
+    ready_ = false;
+    failed_ = false;
   }
 
   virtual ~TcpInterface()
@@ -87,7 +87,7 @@ protected:
   void setup_client();
 
   void start_receive();
-  void receive(const boost::system::error_code& error, size_t rlen);
+  void receive(const boost::system::error_code & error, size_t rlen);
   void receive_thread();
 
   /**
@@ -114,7 +114,6 @@ private:
   std::thread io_thread_;
   std::thread packet_thread_;
 
-  std::array<uint8_t,16384> receive_buf_;
   network_bridge::QueueStream stream_;
 
 };

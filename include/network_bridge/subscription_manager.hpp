@@ -71,6 +71,7 @@ public:
   bool has_data() const;
 
   void check_subscription();
+
 protected:
   /**
    * @brief Sets up a subscription for a given topic.
