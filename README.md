@@ -4,6 +4,13 @@
 **Network Bridge** is a lightweight ROS2 node designed for robust communication between robotic systems over arbitrary network protocols. Supporting UDP and TCP protocols out of the box, this packages seamlessly bridges ROS2 topics across networks, facilitating effective remote communications between a base station and robotic systems, or between multiple robotic systems.
 
 ## Installation
+### Installation via apt
+Install with:
+```
+sudo apt install ros-<distro>-network-bridge
+```
+
+### Building from Source
 Simply clone the repository into your ROS2 workspace and build with `colcon build`.
 
 ## Usage
