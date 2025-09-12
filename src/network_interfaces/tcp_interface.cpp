@@ -116,7 +116,7 @@ void TcpInterface::receive_thread()
   uint8_t start1, start2;
   uint32_t payload_size;
   std::vector<uint8_t> payload;
-  while (!stream_.is_shutdown()) {
+  while (!stream_.is_shutdown() && rclcpp::ok()) {
     switch (state) {
       case 0:
         if (!stream_.readUint8(start1)) {
@@ -217,7 +217,7 @@ void TcpInterface::setup_client()
 
 
   socket_.reset(new tcp::socket(io_context_));
-  while (true) {
+  while (rclcpp::ok()) {
     socket_->connect(endpoint, ec);
     if (!ec) {
       RCLCPP_INFO(
