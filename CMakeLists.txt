@@ -50,22 +50,22 @@ add_library(tcp_interface SHARED
 )
 
 target_link_libraries(network_bridge PUBLIC
-	${std_msgs_TARGETS}
-	pluginlib::pluginlib
-	rclcpp::rclcpp
-	${ZSTD_LIBRARIES}
+  ${std_msgs_TARGETS}
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  ${ZSTD_LIBRARIES}
 )
 
 target_link_libraries(udp_interface PUBLIC
-	pluginlib::pluginlib
-	rclcpp::rclcpp
-	${Boost_LIBRARIES}
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  ${Boost_LIBRARIES}
 )
 
 target_link_libraries(tcp_interface PUBLIC
-	pluginlib::pluginlib
-	rclcpp::rclcpp
-	${Boost_LIBRARIES}
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  ${Boost_LIBRARIES}
 )
 
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)
