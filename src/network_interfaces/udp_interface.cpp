@@ -60,8 +60,8 @@ void UdpInterface::close()
 {
   io_context_.stop();
   try {
-      io_thread_.join();
-  } catch (std::system_error&) {
+    io_thread_.join();
+  } catch (std::system_error &) {
       // the thread was not started
   }
 }

@@ -43,7 +43,7 @@ NetworkBridge::NetworkBridge(const std::string & node_name)
 
 NetworkBridge::~NetworkBridge()
 {
-    shutdown();
+  shutdown();
 }
 
 void NetworkBridge::initialize()
@@ -53,7 +53,7 @@ void NetworkBridge::initialize()
   network_interface_->open();
 }
 
-void NetworkBridge::shutdown() 
+void NetworkBridge::shutdown()
 {
   if (network_interface_) {
     network_interface_->close();

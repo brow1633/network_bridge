@@ -67,7 +67,7 @@ public:
   /**
    * @brief Destroy the objects created by the bridge
    *
-   * It should be called once spinning is over, and before the shared pointer is reset, to 
+   * It should be called once spinning is over, and before the shared pointer is reset, to
    * make sure the garbage collector can run
    */
   virtual void shutdown();
