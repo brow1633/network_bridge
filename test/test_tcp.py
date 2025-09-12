@@ -9,7 +9,6 @@ import launch_testing
 import rclpy
 from rclpy.node import Node
 from rclpy.task import Future
-from launch.actions import TimerAction
 
 from std_msgs.msg import String
 
@@ -37,7 +36,7 @@ def generate_test_description():
     return launch.LaunchDescription(
         [
             tcp1,
-            TimerAction(period=0.1, actions=[tcp2]),
+            launch.actions.TimerAction(period=0.1, actions=[tcp2]),
             launch_testing.actions.ReadyToTest(),
         ]
     )

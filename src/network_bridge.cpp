@@ -41,6 +41,16 @@ NetworkBridge::NetworkBridge(const std::string & node_name)
 : Node(node_name),
   loader_("network_bridge", "network_bridge::NetworkInterface") {}
 
+NetworkBridge::~NetworkBridge()
+{
+  network_interface_->close();
+  network_interface_.reset();
+
+  sub_mgrs_.clear();
+  timers_.clear();
+  publishers_.clear();
+}
+
 void NetworkBridge::initialize()
 {
   load_parameters();
@@ -405,12 +415,14 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   // Randomized name to avoid conflicts
-  std::srand(std::time(nullptr));
-  std::string node_name = "network_bridge" + std::to_string(std::rand());
-  auto node = std::make_shared<NetworkBridge>(node_name);
+  std::string node_name = "network_bridge" + std::to_string(::getpid());
 
+  auto node = std::make_shared<NetworkBridge>(node_name);
   node->initialize();
+
   rclcpp::spin(node);
+  node.reset();
+
   rclcpp::shutdown();
   return 0;
 }
