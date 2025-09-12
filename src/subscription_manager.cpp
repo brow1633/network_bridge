@@ -47,6 +47,8 @@ SubscriptionManager::SubscriptionManager(
 
 void SubscriptionManager::setup_subscription()
 {
+  if (!rclcpp::ok()) {return;} // Querying graph is fragile
+
   const auto all_topics_and_types = node_->get_topic_names_and_types();
 
   std::string topic = subscribe_namespace_ + topic_;

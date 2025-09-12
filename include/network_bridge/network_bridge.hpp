@@ -55,6 +55,8 @@ public:
    */
   explicit NetworkBridge(const std::string & node_name);
 
+  ~NetworkBridge() override;
+
   /**
    * @brief Loads parameters, loads network interface, and opens the network interface.
    *
