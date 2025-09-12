@@ -62,7 +62,7 @@ void UdpInterface::close()
   try {
     io_thread_.join();
   } catch (std::system_error &) {
-      // the thread was not started
+    // the thread was not started
   }
 }
 
