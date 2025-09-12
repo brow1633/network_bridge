@@ -46,6 +46,7 @@ NetworkBridge::~NetworkBridge()
   network_interface_->close();
   network_interface_.reset();
 
+  network_check_timer_.reset();
   sub_mgrs_.clear();
   timers_.clear();
   publishers_.clear();
