@@ -102,13 +102,13 @@ void TcpInterface::close()
   try {
     packet_thread_.join();
   } catch (std::system_error &) {
-      // the thread was not started
+  // the thread was not started
   }
   io_context_.stop();
   try {
     io_thread_.join();
   } catch (std::system_error &) {
-      // the thread was not started
+  // the thread was not started
   }
 }
 
