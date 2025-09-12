@@ -8,7 +8,7 @@
       receive_port: 5001
       remote_address: "127.0.0.1" #e.g. 10.8.0.1
       send_port: 5000
-    
+
     default_rate: 100.0
 
     default_zstd_level: 3
