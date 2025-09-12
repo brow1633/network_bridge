@@ -43,13 +43,7 @@ NetworkBridge::NetworkBridge(const std::string & node_name)
 
 NetworkBridge::~NetworkBridge()
 {
-  network_interface_->close();
-  network_interface_.reset();
-
-  network_check_timer_.reset();
-  sub_mgrs_.clear();
-  timers_.clear();
-  publishers_.clear();
+  shutdown();
 }
 
 void NetworkBridge::initialize()
@@ -57,6 +51,19 @@ void NetworkBridge::initialize()
   load_parameters();
   load_network_interface();
   network_interface_->open();
+}
+
+void NetworkBridge::shutdown()
+{
+  if (network_interface_) {
+    network_interface_->close();
+  }
+  network_interface_.reset();
+
+  network_check_timer_.reset();
+  sub_mgrs_.clear();
+  timers_.clear();
+  publishers_.clear();
 }
 
 void NetworkBridge::load_parameters()
@@ -422,6 +429,7 @@ int main(int argc, char ** argv)
   node->initialize();
 
   rclcpp::spin(node);
+  node->shutdown();
   node.reset();
 
   rclcpp::shutdown();

@@ -64,6 +64,14 @@ public:
    */
   virtual void initialize();
 
+  /**
+   * @brief Destroy the objects created by the bridge
+   *
+   * It should be called once spinning is over, and before the shared pointer is reset, to
+   * make sure the garbage collector can run
+   */
+  virtual void shutdown();
+
 protected:
   /**
    * @brief Loads default parameters and creates subsciption managers for each topic.

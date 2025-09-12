@@ -59,7 +59,11 @@ void UdpInterface::open()
 void UdpInterface::close()
 {
   io_context_.stop();
-  io_thread_.join();
+  try {
+    io_thread_.join();
+  } catch (std::system_error &) {
+    // the thread was not started
+  }
 }
 
 void UdpInterface::load_parameters()
