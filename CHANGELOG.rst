@@ -2,8 +2,8 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2025-09-11)
+------------------
 * Merge pull request `#12 <https://github.com/brow1633/network_bridge/issues/12>`_ from brow1633/robustify
 * Guard against querying graph after context goes invalid
 * make some tests/shutdown more robust
