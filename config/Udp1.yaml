@@ -1,14 +1,14 @@
 /**/*:
   ros__parameters:
-    ### 
+    ###
     ## Parameters for Network Interface
     ###
-    
+
     # Desired network_interface.  Current options:
-    # network_bridge::UdpInterface 
+    # network_bridge::UdpInterface
     #   - Quick but unreliable
     #   - Use for frequent data that you care about now (i.e. telemetry)
-    # network_bridge::TcpInterface 
+    # network_bridge::TcpInterface
     #   - Slower but reliable
     #   - Use for infrequent important communication (i.e. state transitions)
     # NOTE: If you have both use cases, you can use two instances of network_bridge
@@ -27,25 +27,25 @@
       # Desired send port (must be receive port of remote)
       send_port: 5001
 
-    ### 
+    ###
     ## Parameters for ROS2->Network
     ###
 
     # The rate at which to send data over the network interface
-    # This could be set >= than publish rate if you wish to 
+    # This could be set >= than publish rate if you wish to
     # get every message, or < if you wish to only sample the message.
     default_rate: 100.0
 
     # The level of compression to use when sending data over the network (1-22).
     # Beware that small messages may actually expand with high compression.
     # Higher compression levels are good for large messages when bandwidth is
-    # small.  Lower compression levels are good for smaller messages or in 
+    # small.  Lower compression levels are good for smaller messages or in
     # cases where bandwidth is less limited than CPU.
     # Launching with debug logging will show message size in bytes if you wish to tune this.
     default_zstd_level: 3
 
     # Whether to re-transmit data if a new ROS2 message has not been
-    # received within the topic rate.  Can be useful in unreliable 
+    # received within the topic rate.  Can be useful in unreliable
     # networks where you want to increase odds of getting every message.
     publish_stale_data: False
 
@@ -53,16 +53,16 @@
     topics:
       - "/MyDefaultTopic"
       - "/MySpecialTopic"
-    
+
     # Defaults can be overridden for all topics
     /MySpecialTopic:
       rate: 2.0
       zstd_level: 5
-    
+
     # Namespace to be applied to subscribed topics
     subscribe_namespace: "/udp1"
-    
-    ### 
+
+    ###
     ## Parameters for Network->ROS2
     ###
 

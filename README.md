@@ -48,7 +48,7 @@ The following configuration examples demonstrate a robot sending a message on `/
       receive_port: 5001
       remote_address: "192.168.1.3"
       send_port: 5000
-    
+
     topics:
       - "/gps/fix"
 ```
@@ -71,6 +71,25 @@ Network protocols are implemented as pluginlib plugins, allowing the creation of
 
 ### Tuning
 This node can be launched with logger level DEBUG, which provides useful information for tuning the compression, rate and stale message parameters.  For each message that is sent, the receiving side will output the number of bytes received, the decompressed size in bytes and the transmission delay.
+
+### Contributing
+Thank you for considering contributing!
+
+#### Code Formatting
+Python code is formatted with `black`, and C++ is formatted with `uncrustify`.
+
+#### Pre-commit hooks
+To ease the friction of linting, there are pre-commit hooks that you can install:
+
+```bash
+sudo apt install pre-commit
+
+pre-commit run -a # Run on all files manually
+
+pre-commit install # Run on commit automatically
+```
+
+which will reformat code automatically when you commit changes.
 
 ## Acknowledgements
 This package was developed for use in the Indy Autonomous Challenge by the Purdue AI Racing team.  Inspiration was taken from mqtt_client (https://github.com/ika-rwth-aachen/mqtt_client/).

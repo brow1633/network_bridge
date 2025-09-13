@@ -1,0 +1,45 @@
+repos:
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+        exclude: &excludes |
+          (?x)^(
+              .*\.blend|
+              .*\.dae|
+              .*\.mtl|
+              .*\.obj|
+              .*\.pgm|
+              .*\.step|
+              .*\.stl|
+              .*\.patch
+          )$
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        exclude: *excludes
+      - id: trailing-whitespace
+        exclude: *excludes
+  # Black formatting
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+  # Uncrustify
+  - repo: local
+    hooks:
+      - id: uncrustify
+        name: uncrustify
+        entry: uncrustify -c .uncrustify.cfg --no-backup
+        language: system
+        types_or: [c, c++]

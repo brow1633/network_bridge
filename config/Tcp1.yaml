@@ -6,7 +6,7 @@
     TcpInterface:
       role: "server" # "client" or "server"
       port: 5000 # Desired port to listen on
-    
+
     default_rate: 100.0
 
     default_zstd_level: 3
