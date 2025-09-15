@@ -55,6 +55,7 @@ void NetworkBridge::initialize()
 
 void NetworkBridge::shutdown()
 {
+  RCLCPP_INFO(this->get_logger(), "NetworkBridge: Shuting down");
   if (network_interface_) {
     network_interface_->close();
   }
@@ -204,6 +205,7 @@ void NetworkBridge::load_network_interface()
 
 void NetworkBridge::receive_data(std::span<const uint8_t> data)
 {
+#if 1
   auto now = std::chrono::system_clock::now();
 
   // Decompress data
@@ -270,6 +272,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     this->get_logger(),
     "Receive time: %f ms",
     std::chrono::duration<double, std::milli>(end - now).count());
+#endif
 }
 
 void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)

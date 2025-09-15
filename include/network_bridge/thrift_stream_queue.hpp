@@ -79,8 +79,6 @@ public:
     std::unique_lock<std::mutex> lock(mtx);
     Q.clear();
     finish = false;
-    R.clear();
-    recording = false;
   }
 
   void shutdown()
@@ -89,8 +87,6 @@ public:
     finish = true;
     q_condition.notify_all();
     Q.clear();
-    recording = false;
-    R.clear();
   }
 
   template<typename iterator>
@@ -160,38 +156,19 @@ public:
   }
 
 
-  virtual bool skipToNextMessage()
-  {
-    uint8_t c0 = 0, c1 = 0, c2 = 0;
-    std::unique_lock<std::mutex> lock(mtx);
-    c0 = getOneByte(lock);
-    c1 = getOneByte(lock);
-    c2 = getOneByte(lock);
-    while ((c0 != 0x80) || (c1 != 0x01) || (c2 != 0x00)) {
-      if (finish) {break;}
-      if (recording) {
-        R.push_back(c0);
-      }
-      c0 = c1;
-      c1 = c2;
-      c2 = getOneByte(lock);
-    }
-    Q.push_front(c2);
-    Q.push_front(c1);
-    Q.push_front(c0);
-    return true;
-  }
-
-
   virtual bool readBytes(std::vector<uint8_t> & bytes, size_t len)
   {
+    std::unique_lock<std::mutex> lock(mtx);
     bytes.clear();
-    for (size_t i = 0; i < len; i++) {
-      uint8_t b = getOneByte();
-      bytes.push_back(b);
-      if (recording) {
-        R.push_back(b);
+    while (bytes.size() < len) {
+      if (Q.empty()) {
+        q_condition.wait(lock);
+        if (finish) {
+          return false;
+        }
       }
+      bytes.push_back(Q.front());
+      Q.pop_front();
     }
     return true;
   }
