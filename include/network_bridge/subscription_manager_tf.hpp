@@ -36,17 +36,17 @@ SOFTWARE.
 #include <network_bridge/subscription_manager.hpp>
 
 /**
- * @class SubscriptionManager
- * @brief Manages and stores data of subscriptions to a specific topic.
+ * @class SubscriptionManagerTF
+ * @brief Manages and stores data of subscriptions to a specific TF topic.
  *
- * The SubscriptionManager class is responsible for managing and storing data of subscriptions to a specific topic.
- * It provides methods to retrieve the stored data and set up subscriptions for the topic.
+ * The SubscriptionManager class is responsible for managing and storing data of subscriptions to a specific TF topic.
+ * It provides methods to manage the transforms, avoiding any missed transform
  */
 class SubscriptionManagerTF : public SubscriptionManager
 {
 public:
   /**
-   * @brief Constructs a SubscriptionManager object.
+   * @brief Constructs a SubscriptionManagerTF object.
    *
    * This constructor initializes a SubscriptionManager object with the given parameters.
    *
@@ -55,6 +55,7 @@ public:
    * @param zstd_compression_level The compression level for Zstandard compression (default: 3).
    * @param namespace The namespace for the subscription.
    * @param publish_stale_data Flag indicating whether to publish stale data (default: false).
+   * @param static_tf Flag indicating whether the subscriber is a static transform .
    */
   SubscriptionManagerTF(
     const rclcpp::Node::SharedPtr & node, const std::string & topic,
@@ -63,21 +64,55 @@ public:
 
   virtual ~SubscriptionManagerTF();
 
+  /**
+   * @brief Check if the subscription has been successful, or try to set it up
+   *
+   */
   void check_subscription() override;
 
 protected:
+  /**
+   * @brief Create the subscriber
+   *
+   * This function creates the actual subscriber after setup-subscription has
+   * handled the qos and other params. Can be overloaded by specialized
+   * subscribers
+   */
   void create_subscription(
     const std::string & topic,
     const std::string & msg_type, const rclcpp::QoS & qos) override;
 
+  /**
+   * @brief Callback function for handling tf2 messages.
+   *
+   * This function is called when a tf2 message is received by the subscription manager.
+   * It stores the recovered transforms in the tfs_ messages
+   *
+   * @param tfmsg A shared pointer to the tf2 message.
+   */
   void tf2_callback(
     const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg);
 
+  /**
+   * @brief The ROS2 TF2 subscriber object.
+   */
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf2_subscriber_;
 
+  /**
+   * @brief The ROS2 TF2 serialization object.
+   */
   rclcpp::Serialization<tf2_msgs::msg::TFMessage> tf2_serialization_;
+  /**
+   * @brief Map linking (frame_id,child_frame_id) to the position in tf_s
+   */
   std::map<std::pair<std::string, std::string>, size_t> tf_id_;
+  /**
+   * @brief TF message grouping all the transforms received so far.
+   */
   tf2_msgs::msg::TFMessage tfs_;
 
+  /**
+   * @brief Flag indicating if this a static tf topic
+   */
   bool static_tf_;
 };

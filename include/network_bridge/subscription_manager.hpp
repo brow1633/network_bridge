@@ -62,16 +62,26 @@ public:
   /**
    * @brief Retrieves the data stored in the subscription manager.
    *
-   * This method returns a constant reference to the vector containing the stored data.
-   * If no data has been received or if the data is stale and the flag publish_stale_data_ is false,
-   * an empty vector is returned.
+   * This method copies the data in the provided vector under the protection
+   * of an internal mutex.
+   * Return false if no data has been received or if the data is stale and
+   * the flag publish_stale_data_ is false,
    *
-   * @return A constant reference to the vector containing the data.
+   * @return a boolean flag indicating if the data is valid
    */
   virtual bool get_data(std::vector<uint8_t> & data);
 
+  /**
+   * @brief Check if data is available
+   *
+   * @return a boolean flag indicating if the data is valid
+   */
   virtual bool has_data() const;
 
+  /**
+   * @brief Check if the subscription has been successful, or try to set it up
+   *
+   */
   virtual void check_subscription();
 
   /**
@@ -84,6 +94,13 @@ public:
    */
   virtual void setup_subscription();
 
+  /**
+   * @brief Create the subscriber
+   *
+   * This function creates the actual subscriber after setup-subscription has
+   * handled the qos and other params. Can be overloaded by specialized
+   * subscribers
+   */
   virtual void create_subscription(
     const std::string & topic,
     const std::string & msg_type, const rclcpp::QoS & qos);
