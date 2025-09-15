@@ -57,6 +57,8 @@ public:
     const std::string & subscribe_namespace, int zstd_compression_level = 3,
     bool publish_stale_data = false);
 
+  virtual ~SubscriptionManager();
+
   /**
    * @brief Retrieves the data stored in the subscription manager.
    *
@@ -66,13 +68,12 @@ public:
    *
    * @return A constant reference to the vector containing the data.
    */
-  const std::vector<uint8_t> & get_data();
+  virtual bool get_data(std::vector<uint8_t> & data);
 
-  bool has_data() const;
+  virtual bool has_data() const;
 
-  void check_subscription();
+  virtual void check_subscription();
 
-protected:
   /**
    * @brief Sets up a subscription for a given topic.
    *
@@ -81,7 +82,12 @@ protected:
    * This function is called automatically in the constructor and get_data() method.
    * It fails if the topic does not exist or if there are no publishers on this topic.
    */
-  void setup_subscription();
+  virtual void setup_subscription();
+
+protected:
+  virtual void create_subscription(
+    const std::string & topic,
+    const std::string & msg_type, const rclcpp::QoS & qos);
 
   /**
    * @brief Callback function for handling serialized messages.
@@ -145,5 +151,6 @@ protected:
   /**
    * @brief The data buffer for the subscription manager.
    */
+  std::mutex mtx;
   std::vector<uint8_t> data_;
 };

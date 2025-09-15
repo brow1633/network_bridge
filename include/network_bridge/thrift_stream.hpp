@@ -16,8 +16,6 @@ public:
 
   virtual void shutdown() = 0;
 
-  virtual bool skipToNextMessage() = 0;
-
   virtual bool readBytes(std::vector<uint8_t> & bytes, size_t len) = 0;
 
   virtual size_t readSome(std::vector<uint8_t> & bytes, size_t maxlen) = 0;
@@ -25,29 +23,6 @@ public:
   virtual int available()
   {
     return -1;             // not implemented
-  }
-
-protected:
-  bool recording;
-  std::list<uint8_t> R;           // byte recording
-
-public:
-  void startRecording()
-  {
-    R.clear();
-    recording = true;
-    // std::cout << "Start recording " << std::endl;
-  }
-
-  void stopRecording()
-  {
-    recording = false;
-    // std::cout << "Stop recording: " << R.size() << std::endl;
-  }
-
-  const std::list<uint8_t> getRecording() const
-  {
-    return R;
   }
 
 public:
