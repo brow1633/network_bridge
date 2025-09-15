@@ -35,6 +35,7 @@ SOFTWARE.
 #include <pluginlib/class_loader.hpp>
 #include <std_msgs/msg/string.hpp>
 
+#include "network_bridge/subscription_manager_tf.hpp"
 #include "network_interfaces/network_interface_base.hpp"
 
 NetworkBridge::NetworkBridge(const std::string & node_name)
@@ -130,33 +131,65 @@ void NetworkBridge::load_parameters()
   for (const auto & topic : topics) {
     std::string rate_param_name = topic + ".rate";
     std::string zstd_level_param_name = topic + ".zstd_level";
+    std::string is_tf_param_name = topic + ".is_tf";
+    bool is_tf = (topic == "/tf") || (topic == "tf") || (topic == "/static_tf") ||
+      (topic == "static_tf");
+    bool is_static_tf = is_tf && ((topic == "/static_tf") || (topic == "static_tf"));
+    float rate = 1;
+    int zstd_level = 3;
 
-    this->declare_parameter<double>(rate_param_name, default_rate);
+
     this->declare_parameter<int>(zstd_level_param_name, default_zstd_level);
-
-    float rate;
-    int zstd_level;
-
+    // Add this parameter to force the tf nature if needed
+    this->declare_parameter<bool>(is_tf_param_name, is_tf);
+    this->declare_parameter<double>(rate_param_name, default_rate);
+    this->get_parameter(is_tf_param_name, is_tf);
     this->get_parameter(rate_param_name, rate);
     this->get_parameter(zstd_level_param_name, zstd_level);
 
-    auto manager = std::make_shared<SubscriptionManager>(
-      shared_from_this(), topic, subscribe_namespace,
-      zstd_level, publish_stale_data);
-    sub_mgrs_.push_back(manager);
+    if (is_tf) {
+      // Add this parameter to force the static tf nature if needed
+      std::string is_static_tf_param_name = topic + ".is_static_tf";
+      this->declare_parameter<bool>(is_tf_param_name, is_static_tf);
 
-    int ms = static_cast<int>(1000.0 / rate);
-    auto timer = this->create_wall_timer(
-      std::chrono::milliseconds(ms),
-      [this, manager]() {
-        send_data(manager);
-      });
+      this->get_parameter(is_static_tf_param_name, is_static_tf);
 
-    timers_.push_back(timer);
+      std::shared_ptr<SubscriptionManager> manager(new SubscriptionManagerTF(
+          shared_from_this(), topic, subscribe_namespace,
+          zstd_level, publish_stale_data, is_static_tf));
+      sub_mgrs_.push_back(manager);
 
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Topic: %s, Rate: %f Hz", topic.c_str(), rate);
+      // TODO: specialize this
+      int ms = static_cast<int>(1000.0 / rate);
+      auto timer = this->create_wall_timer(
+        std::chrono::milliseconds(ms),
+        [this, manager]() {
+          send_data(manager);
+        });
+
+      timers_.push_back(timer);
+      RCLCPP_INFO(
+        this->get_logger(),
+        "TF Topic: %s, Rate: %f Hz", topic.c_str(), rate);
+    } else {
+      auto manager = std::make_shared<SubscriptionManager>(
+        shared_from_this(), topic, subscribe_namespace,
+        zstd_level, publish_stale_data);
+      sub_mgrs_.push_back(manager);
+
+      int ms = static_cast<int>(1000.0 / rate);
+      auto timer = this->create_wall_timer(
+        std::chrono::milliseconds(ms),
+        [this, manager]() {
+          send_data(manager);
+        });
+
+      timers_.push_back(timer);
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Topic: %s, Rate: %f Hz", topic.c_str(), rate);
+    }
+
   }
 
   network_check_timer_ = this->create_wall_timer(
@@ -205,7 +238,10 @@ void NetworkBridge::load_network_interface()
 
 void NetworkBridge::receive_data(std::span<const uint8_t> data)
 {
-#if 1
+  if (!rclcpp::ok()) {
+    return;
+  }
+
   auto now = std::chrono::system_clock::now();
 
   // Decompress data
@@ -265,14 +301,15 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     msg.get_rcl_serialized_message().buffer);
 
   msg.get_rcl_serialized_message().buffer_length = payload.size();
-  publishers_[topic]->publish(msg);
+  if (rclcpp::ok()) {
+    publishers_[topic]->publish(msg);
+  }
 
   auto end = std::chrono::system_clock::now();
   RCLCPP_DEBUG(
     this->get_logger(),
     "Receive time: %f ms",
     std::chrono::duration<double, std::milli>(end - now).count());
-#endif
 }
 
 void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
@@ -285,9 +322,8 @@ void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
     return;
   }
 
-  const std::vector<uint8_t> & data = manager->get_data();
-
-  if (data.empty()) {
+  std::vector<uint8_t> data;
+  if (!manager->get_data(data)) {
     RCLCPP_WARN(
       this->get_logger(),
       "SubscriptionManager %s has no data", manager->topic_.c_str());

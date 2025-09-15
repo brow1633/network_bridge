@@ -45,6 +45,8 @@ SubscriptionManager::SubscriptionManager(
   setup_subscription();
 }
 
+SubscriptionManager::~SubscriptionManager() {}
+
 void SubscriptionManager::setup_subscription()
 {
   if (!rclcpp::ok()) {return;} // Querying graph is fragile
@@ -99,8 +101,15 @@ void SubscriptionManager::setup_subscription()
 
   msg_type_ = all_topics_and_types.at(topic)[0];
 
+  this->create_subscription(topic, msg_type_, qos);
+}
+
+void SubscriptionManager::create_subscription(
+  const std::string & topic,
+  const std::string & msg_type, const rclcpp::QoS & qos)
+{
   subscriber = node_->create_generic_subscription(
-    topic, msg_type_, qos,
+    topic, msg_type, qos,
     [this](
       const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg) {
       this->callback(serialized_msg);
@@ -110,6 +119,7 @@ void SubscriptionManager::setup_subscription()
 void SubscriptionManager::callback(
   const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   RCLCPP_DEBUG(
     node_->get_logger(),
     "Received message on topic %s", topic_.c_str());
@@ -143,26 +153,29 @@ bool SubscriptionManager::has_data() const
 }
 
 
-const std::vector<uint8_t> & SubscriptionManager::get_data()
+bool SubscriptionManager::get_data(std::vector<uint8_t> & data)
 {
+  std::unique_lock<std::mutex> lock(mtx);
+  data.clear();
   if (!subscriber) {
     setup_subscription();
     RCLCPP_WARN(node_->get_logger(), "Send Timer: Subscriber is not set");
-    return data_;
+    return false;
   }
 
   if (!received_msg_) {
     RCLCPP_WARN(node_->get_logger(), "Send Timer: No message ever received");
-    return data_;
+    return false;
   }
 
 
   if (is_stale_ && !publish_stale_data_) {
     RCLCPP_WARN(node_->get_logger(), "Send Timer: Stored data is stale");
-    data_.clear();
-    return data_;
+    data.clear();
+    return false;
   }
 
   is_stale_ = true;
-  return data_;
+  data = data_;
+  return true;
 }

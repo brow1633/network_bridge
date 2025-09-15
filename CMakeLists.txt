@@ -14,6 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PkgConfig REQUIRED)
@@ -39,7 +40,11 @@ endif()
 
 include_directories(include)
 
-add_executable(network_bridge src/network_bridge.cpp src/subscription_manager.cpp)
+add_executable(network_bridge
+    src/network_bridge.cpp
+    src/subscription_manager.cpp
+    src/subscription_manager_tf.cpp
+)
 
 add_library(udp_interface SHARED
   src/network_interfaces/udp_interface.cpp
@@ -51,6 +56,7 @@ add_library(tcp_interface SHARED
 
 target_link_libraries(network_bridge PUBLIC
   ${std_msgs_TARGETS}
+  ${tf2_msgs_TARGETS}
   pluginlib::pluginlib
   rclcpp::rclcpp
   ${ZSTD_LIBRARIES}

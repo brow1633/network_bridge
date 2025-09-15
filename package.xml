@@ -21,6 +21,7 @@
   <depend>libboost-system-dev</depend>
   <depend>libzstd-dev</depend>
   <depend>std_msgs</depend>
+  <depend>tf2_msgs</depend>
   <depend>pluginlib</depend>
 
 
