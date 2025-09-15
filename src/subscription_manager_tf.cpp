@@ -51,7 +51,6 @@ void SubscriptionManagerTF::create_subscription(
   const std::string & topic,
   const std::string & /*msg_type*/, const rclcpp::QoS & qos)
 {
-  RCLCPP_INFO(node_->get_logger(), "Creating TF Subscription");
   tf2_subscriber_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
     topic, qos,
     [this](

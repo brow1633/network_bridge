@@ -256,12 +256,14 @@ void TcpInterface::error_handler(
 
 void TcpInterface::start_receive()
 {
-  socket_->async_read_some(
-    boost::asio::buffer(receive_buffer_),
-    boost::bind(
-      &TcpInterface::receive, this,
-      boost::asio::placeholders::error,
-      boost::asio::placeholders::bytes_transferred));
+  if (socket_) {
+    socket_->async_read_some(
+      boost::asio::buffer(receive_buffer_),
+      boost::bind(
+        &TcpInterface::receive, this,
+        boost::asio::placeholders::error,
+        boost::asio::placeholders::bytes_transferred));
+  }
 }
 
 void TcpInterface::receive(const boost::system::error_code & error, size_t rlen)

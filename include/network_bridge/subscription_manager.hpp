@@ -84,7 +84,6 @@ public:
    */
   virtual void setup_subscription();
 
-protected:
   virtual void create_subscription(
     const std::string & topic,
     const std::string & msg_type, const rclcpp::QoS & qos);

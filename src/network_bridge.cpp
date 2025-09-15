@@ -240,6 +240,10 @@ void NetworkBridge::load_network_interface()
 
 void NetworkBridge::receive_data(std::span<const uint8_t> data)
 {
+  if (!rclcpp::ok()) {
+    return;
+  }
+
   auto now = std::chrono::system_clock::now();
 
   // Decompress data
@@ -299,7 +303,9 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     msg.get_rcl_serialized_message().buffer);
 
   msg.get_rcl_serialized_message().buffer_length = payload.size();
-  publishers_[topic]->publish(msg);
+  if (rclcpp::ok()) {
+    publishers_[topic]->publish(msg);
+  }
 
   auto end = std::chrono::system_clock::now();
   RCLCPP_DEBUG(
