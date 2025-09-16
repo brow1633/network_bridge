@@ -92,8 +92,8 @@ void SubscriptionManagerTF::tf2_callback(
           t.header.frame_id.c_str(), t.child_frame_id.c_str(), topic_.c_str());
         tf_id_.clear();
         tfs_.transforms.clear();
-        i = 0;
-        continue;
+        tf2_subscriber_.reset();
+        return;
       }
       tf_id_[id] = tfs_.transforms.size();
       tfs_.transforms.push_back(t);
