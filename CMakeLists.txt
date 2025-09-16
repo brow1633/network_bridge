@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PkgConfig REQUIRED)
@@ -59,6 +60,7 @@ target_link_libraries(network_bridge PUBLIC
   ${tf2_msgs_TARGETS}
   pluginlib::pluginlib
   rclcpp::rclcpp
+  tf2_ros::tf2_ros
   ${ZSTD_LIBRARIES}
 )
 

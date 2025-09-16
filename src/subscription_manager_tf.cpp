@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include <rclcpp/qos.hpp>
+#include <tf2_ros/qos.hpp>
 #include "network_bridge/subscription_manager_tf.hpp"
 
 SubscriptionManagerTF::SubscriptionManagerTF(
@@ -49,14 +50,25 @@ void SubscriptionManagerTF::check_subscription()
 
 void SubscriptionManagerTF::create_subscription(
   const std::string & topic,
-  const std::string & /*msg_type*/, const rclcpp::QoS & qos)
+  const std::string & /*msg_type*/, const rclcpp::QoS & /*qos*/)
 {
-  tf2_subscriber_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
-    topic, qos,
-    [this](
-      const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg) {
-      this->tf2_callback(tfmsg);
-    });
+  if (static_tf_) {
+    tf2_ros::StaticListenerQoS static_qos;
+    tf2_subscriber_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
+      topic, static_qos,
+      [this](
+        const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg) {
+        this->tf2_callback(tfmsg);
+      });
+  } else {
+    tf2_ros::DynamicListenerQoS dynamic_qos;
+    tf2_subscriber_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
+      topic, dynamic_qos,
+      [this](
+        const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg) {
+        this->tf2_callback(tfmsg);
+      });
+  }
 }
 
 void SubscriptionManagerTF::tf2_callback(
@@ -77,7 +89,7 @@ void SubscriptionManagerTF::tf2_callback(
         // We detected TF B->A when A->B was already in the tree.
         RCLCPP_INFO(
           node_->get_logger(), "Detected inconsistent TF (%s->%s) on %s. Resetting buffer.",
-          topic_.c_str(), t.header.frame_id.c_str(), t.child_frame_id.c_str());
+          t.header.frame_id.c_str(), t.child_frame_id.c_str(), topic_.c_str());
         tf_id_.clear();
         tfs_.transforms.clear();
         i = 0;
