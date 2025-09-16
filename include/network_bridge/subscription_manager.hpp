@@ -62,14 +62,12 @@ public:
   /**
    * @brief Retrieves the data stored in the subscription manager.
    *
-   * This method copies the data in the provided vector under the protection
-   * of an internal mutex.
-   * Return false if no data has been received or if the data is stale and
+   * Set is_valid to false if no data has been received or if the data is stale and
    * the flag publish_stale_data_ is false,
    *
-   * @return a boolean flag indicating if the data is valid
+   * @return a const reference to the internal data buffer
    */
-  virtual bool get_data(std::vector<uint8_t> & data);
+  virtual const std::vector<uint8_t> & get_data(bool & is_valid);
 
   /**
    * @brief Check if data is available
@@ -170,6 +168,5 @@ protected:
   /**
    * @brief The data buffer for the subscription manager.
    */
-  std::mutex mtx;
   std::vector<uint8_t> data_;
 };

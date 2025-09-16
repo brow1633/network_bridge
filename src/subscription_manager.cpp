@@ -118,7 +118,6 @@ void SubscriptionManager::create_subscription(
 void SubscriptionManager::callback(
   const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg)
 {
-  std::unique_lock<std::mutex> lock(mtx);
   RCLCPP_DEBUG(
     node_->get_logger(),
     "Received message on topic %s", topic_.c_str());
@@ -153,24 +152,22 @@ bool SubscriptionManager::is_stale() const
   return is_stale_;
 }
 
-bool SubscriptionManager::get_data(std::vector<uint8_t> & data)
+const std::vector<uint8_t> & SubscriptionManager::get_data(bool & is_valid)
 {
-  std::unique_lock<std::mutex> lock(mtx);
-  data.clear();
+  is_valid = false;
 
   if (!received_msg_) {
     RCLCPP_WARN(node_->get_logger(), "Send Timer: No message ever received");
-    return false;
+    return data_;
   }
 
 
   if (this->is_stale() && !publish_stale_data_) {
     RCLCPP_WARN(node_->get_logger(), "Send Timer: Stored data is stale");
-    data.clear();
-    return false;
+    return data_;
   }
 
   is_stale_ = true;
-  data = data_;
-  return true;
+  is_valid = true;
+  return data_;
 }

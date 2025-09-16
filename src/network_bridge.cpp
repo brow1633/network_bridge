@@ -337,8 +337,9 @@ void NetworkBridge::send_data(std::shared_ptr<SubscriptionManager> manager)
     return;
   }
 
-  std::vector<uint8_t> data;
-  if (!manager->get_data(data)) {
+  bool is_data_valid = false;
+  const std::vector<uint8_t> & data = manager->get_data(is_data_valid);
+  if (data.empty() || !is_data_valid) { // This should not happen given the test above
     RCLCPP_WARN(
       this->get_logger(),
       "SubscriptionManager %s has no data", manager->topic_.c_str());
