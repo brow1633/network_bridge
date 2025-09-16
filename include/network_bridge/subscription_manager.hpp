@@ -57,22 +57,31 @@ public:
     const std::string & subscribe_namespace, int zstd_compression_level = 3,
     bool publish_stale_data = false);
 
+  virtual ~SubscriptionManager();
+
   /**
    * @brief Retrieves the data stored in the subscription manager.
    *
-   * This method returns a constant reference to the vector containing the stored data.
-   * If no data has been received or if the data is stale and the flag publish_stale_data_ is false,
-   * an empty vector is returned.
+   * Set is_valid to false if no data has been received or if the data is stale and
+   * the flag publish_stale_data_ is false,
    *
-   * @return A constant reference to the vector containing the data.
+   * @return a const reference to the internal data buffer
    */
-  const std::vector<uint8_t> & get_data();
+  virtual const std::vector<uint8_t> & get_data(bool & is_valid);
 
-  bool has_data() const;
+  /**
+   * @brief Check if data is available
+   *
+   * @return a boolean flag indicating if the data is valid
+   */
+  virtual bool has_data() const;
 
-  void check_subscription();
+  /**
+   * @brief Check if the subscription has been successful, or try to set it up
+   *
+   */
+  virtual void check_subscription();
 
-protected:
   /**
    * @brief Sets up a subscription for a given topic.
    *
@@ -81,7 +90,21 @@ protected:
    * This function is called automatically in the constructor and get_data() method.
    * It fails if the topic does not exist or if there are no publishers on this topic.
    */
-  void setup_subscription();
+  virtual void setup_subscription();
+
+  /**
+   * @brief Create the subscriber
+   *
+   * This function creates the actual subscriber after setup-subscription has
+   * handled the qos and other params. Can be overloaded by specialized
+   * subscribers
+   */
+  virtual void create_subscription(
+    const std::string & topic,
+    const std::string & msg_type, const rclcpp::QoS & qos);
+
+
+  virtual bool is_stale() const;
 
   /**
    * @brief Callback function for handling serialized messages.

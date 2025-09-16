@@ -107,6 +107,7 @@ private:
   int port_;
   bool ready_;
   bool failed_;
+  bool shutting_down_;
 
   io_context io_context_;
   std::shared_ptr<tcp::socket> socket_;
