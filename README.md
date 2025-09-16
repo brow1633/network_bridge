@@ -65,6 +65,8 @@ The following configuration examples demonstrate a robot sending a message on `/
 #### Special case: TF
 The TF topic `/tf` or `/tf_static` are handled as a special cases. The subscriber side will listen to all TF messages, accumulate them
 (similarly to a TF buffer) and send all of them at the specified rate. The behavior can be disabled or forced using the `is_tf` configuration.
+
+If some TFs need to be excluded or if the list of TFs to include is finite, one can use the include and exclude regex parameters. A transform is matched (hence excluded or included) if either the `frame_id` or `child_frame_id` are matching a pattern.
 ```
 /udp_sender:
   ros__parameters:
@@ -76,11 +78,17 @@ The TF topic `/tf` or `/tf_static` are handled as a special cases. The subscribe
 
     topics:
       - "/prefix/tf"
+      - "/tf_static"
 
     /prefix/tf:
       - is_tf: True
       - is_static_tf: False
       - rate: 10.
+
+    /tf_static:
+      - rate: 1.0
+      - is_static_tf: True
+      - exclude: ["standoff.*", "spacer.*", ".*wheel_link", ".*cliff.*"]
 ```
 
 ### Choice of protocol
