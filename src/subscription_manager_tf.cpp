@@ -63,11 +63,14 @@ void SubscriptionManagerTF::tf2_callback(
   const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg)
 {
   bool new_tf = false;
-  for (size_t i = 0; i < tfmsg->transforms.size(); i++) {
+  size_t i = 0;
+  // Not using a for loop to allow a clean reset.
+  while (i < tfmsg->transforms.size()) {
     const geometry_msgs::msg::TransformStamped t = tfmsg->transforms[i];
     auto id = std::make_pair(t.header.frame_id, t.child_frame_id);
     auto it = tf_id_.find(id);
     if (it == tf_id_.end()) {
+      // Unknown TF
       auto id_rev = std::make_pair(t.child_frame_id, t.header.frame_id);
       auto it_rev = tf_id_.find(id_rev);
       if (it_rev != tf_id_.end()) {
@@ -84,8 +87,10 @@ void SubscriptionManagerTF::tf2_callback(
       tfs_.transforms.push_back(t);
       new_tf = true;
     } else {
+      // Known TF
       tfs_.transforms[it->second] = t;
     }
+    i++;
   }
   if (new_tf) {
     RCLCPP_INFO(
