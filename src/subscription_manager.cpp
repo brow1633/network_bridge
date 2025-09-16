@@ -142,12 +142,16 @@ bool SubscriptionManager::has_data() const
   if (!received_msg_) {
     return false;
   }
-  if (is_stale_ && !publish_stale_data_) {
+  if (this->is_stale() && !publish_stale_data_) {
     return false;
   }
   return true;
 }
 
+bool SubscriptionManager::is_stale() const
+{
+  return is_stale_;
+}
 
 bool SubscriptionManager::get_data(std::vector<uint8_t> & data)
 {
@@ -160,7 +164,7 @@ bool SubscriptionManager::get_data(std::vector<uint8_t> & data)
   }
 
 
-  if (is_stale_ && !publish_stale_data_) {
+  if (this->is_stale() && !publish_stale_data_) {
     RCLCPP_WARN(node_->get_logger(), "Send Timer: Stored data is stale");
     data.clear();
     return false;

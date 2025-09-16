@@ -105,6 +105,9 @@ public:
     const std::string & topic,
     const std::string & msg_type, const rclcpp::QoS & qos);
 
+
+  virtual bool is_stale() const;
+
   /**
    * @brief Callback function for handling serialized messages.
    *

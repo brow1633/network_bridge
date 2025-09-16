@@ -70,6 +70,8 @@ public:
    */
   void check_subscription() override;
 
+  bool is_stale() const override;
+
 protected:
   /**
    * @brief Create the subscriber

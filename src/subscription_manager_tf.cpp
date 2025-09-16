@@ -71,6 +71,15 @@ void SubscriptionManagerTF::create_subscription(
   }
 }
 
+bool SubscriptionManagerTF::is_stale() const
+{
+  if (static_tf_) {
+    return false;
+  }
+  return SubscriptionManager::is_stale();
+}
+
+
 void SubscriptionManagerTF::tf2_callback(
   const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg)
 {
