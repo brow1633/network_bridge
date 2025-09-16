@@ -68,6 +68,18 @@ void SubscriptionManagerTF::tf2_callback(
     auto id = std::make_pair(t.header.frame_id, t.child_frame_id);
     auto it = tf_id_.find(id);
     if (it == tf_id_.end()) {
+      auto id_rev = std::make_pair(t.child_frame_id, t.header.frame_id);
+      auto it_rev = tf_id_.find(id_rev);
+      if (it_rev != tf_id_.end()) {
+        // We detected TF B->A when A->B was already in the tree.
+        RCLCPP_INFO(
+          node_->get_logger(), "Detected inconsistent TF (%s->%s) on %s. Resetting buffer.",
+          topic_.c_str(), t.header.frame_id.c_str(), t.child_frame_id.c_str());
+        tf_id_.clear();
+        tfs_.transforms.clear();
+        i = 0;
+        continue;
+      }
       tf_id_[id] = tfs_.transforms.size();
       tfs_.transforms.push_back(t);
       new_tf = true;
