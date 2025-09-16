@@ -29,6 +29,8 @@ SOFTWARE.
 #include <memory>
 #include <string>
 #include <vector>
+#include <regex>
+
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
@@ -71,6 +73,9 @@ public:
   void check_subscription() override;
 
   bool is_stale() const override;
+
+  void set_include_pattern(const std::vector<std::string> & pattern);
+  void set_exclude_pattern(const std::vector<std::string> & pattern);
 
 protected:
   /**
@@ -117,4 +122,13 @@ protected:
    * @brief Flag indicating if this a static tf topic
    */
   bool static_tf_;
+
+  /**
+   * @brief List of accepted tf name pattern (frame_id or child), ignored if empty
+   */
+  std::vector<std::regex> include_pattern;
+  /**
+   * @brief List of excluded tf name pattern (frame_id or child), ignored if empty
+   */
+  std::vector<std::regex> exclude_pattern;
 };

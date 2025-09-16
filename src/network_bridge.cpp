@@ -151,14 +151,27 @@ void NetworkBridge::load_parameters()
       // Add this parameter to force the static tf nature if needed
       std::string is_static_tf_param_name = topic + ".is_static_tf";
       this->declare_parameter<bool>(is_static_tf_param_name, is_static_tf);
+      std::string tf_include_param_name = topic + ".include";
+      std::string tf_exclude_param_name = topic + ".exclude";
+      std::vector<std::string> tf_include, tf_exclude;
+      this->declare_parameter(tf_include_param_name, tf_include);
+      this->declare_parameter(tf_exclude_param_name, tf_exclude);
 
       this->get_parameter(is_static_tf_param_name, is_static_tf);
+      this->get_parameter(tf_include_param_name, tf_include);
+      this->get_parameter(tf_exclude_param_name, tf_exclude);
 
-      std::shared_ptr<SubscriptionManager> manager(new SubscriptionManagerTF(
+      std::shared_ptr<SubscriptionManagerTF> manager(new SubscriptionManagerTF(
           shared_from_this(), topic, subscribe_namespace,
           zstd_level, publish_stale_data, is_static_tf));
+      if (!tf_include.empty()) {
+        manager->set_include_pattern(tf_include);
+      }
+      if (!tf_exclude.empty()) {
+        manager->set_exclude_pattern(tf_exclude);
+      }
       manager->setup_subscription();
-      sub_mgrs_.push_back(manager);
+      sub_mgrs_.push_back(std::static_pointer_cast<SubscriptionManager>(manager));
 
       // TODO: specialize this
       int ms = static_cast<int>(1000.0 / rate);

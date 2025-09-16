@@ -79,6 +79,19 @@ bool SubscriptionManagerTF::is_stale() const
   return SubscriptionManager::is_stale();
 }
 
+void SubscriptionManagerTF::set_include_pattern(const std::vector<std::string> & pattern)
+{
+  for (auto v: pattern) {
+    include_pattern.push_back(std::regex(v));
+  }
+}
+
+void SubscriptionManagerTF::set_exclude_pattern(const std::vector<std::string> & pattern)
+{
+  for (auto v: pattern) {
+    exclude_pattern.push_back(std::regex(v));
+  }
+}
 
 void SubscriptionManagerTF::tf2_callback(
   const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg)
@@ -88,6 +101,44 @@ void SubscriptionManagerTF::tf2_callback(
   // Not using a for loop to allow a clean reset.
   while (i < tfmsg->transforms.size()) {
     const geometry_msgs::msg::TransformStamped t = tfmsg->transforms[i];
+    if (!exclude_pattern.empty()) {
+      bool matched = false;
+      for (auto v : exclude_pattern) {
+        std::smatch m;
+        if (std::regex_match(t.header.frame_id, m, v)) {
+          matched = true;
+          break;
+        }
+        if (std::regex_match(t.child_frame_id, m, v)) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) {
+        // Ignore this transform, it's in the exclude list
+        i++;
+        continue;
+      }
+    }
+    if (!include_pattern.empty()) {
+      bool matched = false;
+      for (auto v : include_pattern) {
+        std::smatch m;
+        if (std::regex_match(t.header.frame_id, m, v)) {
+          matched = true;
+          break;
+        }
+        if (std::regex_match(t.child_frame_id, m, v)) {
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        // Ignore this transform, it's not in the matched list
+        i++;
+        continue;
+      }
+    }
     auto id = std::make_pair(t.header.frame_id, t.child_frame_id);
     auto it = tf_id_.find(id);
     if (it == tf_id_.end()) {
