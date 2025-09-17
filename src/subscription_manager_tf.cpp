@@ -60,6 +60,9 @@ void SubscriptionManagerTF::create_subscription(
         const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg) {
         this->tf2_callback(tfmsg);
       });
+    RCLCPP_INFO(
+      node_->get_logger(),
+      "Created static TF subscriber for topic %s", topic.c_str());
   } else {
     tf2_ros::DynamicListenerQoS dynamic_qos;
     tf2_subscriber_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
@@ -68,6 +71,9 @@ void SubscriptionManagerTF::create_subscription(
         const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg) {
         this->tf2_callback(tfmsg);
       });
+    RCLCPP_INFO(
+      node_->get_logger(),
+      "Created generic TF subscriber for topic %s", topic.c_str());
   }
 }
 
@@ -97,9 +103,7 @@ void SubscriptionManagerTF::tf2_callback(
   const std::shared_ptr<const tf2_msgs::msg::TFMessage> & tfmsg)
 {
   bool new_tf = false;
-  size_t i = 0;
-  // Not using a for loop to allow a clean reset.
-  while (i < tfmsg->transforms.size()) {
+  for (size_t i = 0; i < tfmsg->transforms.size(); i++) {
     const geometry_msgs::msg::TransformStamped t = tfmsg->transforms[i];
     if (!exclude_pattern.empty()) {
       bool matched = false;
@@ -116,7 +120,6 @@ void SubscriptionManagerTF::tf2_callback(
       }
       if (matched) {
         // Ignore this transform, it's in the exclude list
-        i++;
         continue;
       }
     }
@@ -135,7 +138,6 @@ void SubscriptionManagerTF::tf2_callback(
       }
       if (!matched) {
         // Ignore this transform, it's not in the matched list
-        i++;
         continue;
       }
     }
@@ -162,7 +164,11 @@ void SubscriptionManagerTF::tf2_callback(
       // Known TF
       tfs_.transforms[it->second] = t;
     }
-    i++;
+  }
+  if (static_tf_) {
+    for (size_t i = 0; i < tfs_.transforms.size(); i++) {
+      tfs_.transforms[i].header.stamp = rclcpp::Time();
+    }
   }
   if (new_tf) {
     RCLCPP_INFO(
