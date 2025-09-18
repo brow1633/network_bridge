@@ -59,6 +59,7 @@ void TcpInterface::open()
   shutting_down_ = false;
   failed_ = false;
   ready_ = false;
+  stream_.reset();
   io_context_.restart();
   if (role_ == "server") {
     setup_server();

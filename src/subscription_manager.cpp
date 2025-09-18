@@ -55,7 +55,7 @@ void SubscriptionManager::setup_subscription()
   std::string topic = subscribe_namespace_ + topic_;
 
   if (all_topics_and_types.find(topic) == all_topics_and_types.end()) {
-    if (topic_found_) {
+    if (topic_found_) { // If we thought is was found but we cannot find it.
       RCLCPP_WARN(node_->get_logger(), "Topic %s not found", topic.c_str());
     }
     topic_found_ = false;
@@ -113,6 +113,9 @@ void SubscriptionManager::create_subscription(
       const std::shared_ptr<const rclcpp::SerializedMessage> & serialized_msg) {
       this->callback(serialized_msg);
     });
+  RCLCPP_INFO(
+    node_->get_logger(),
+    "Created generic subscriber for topic %s", topic.c_str());
 }
 
 void SubscriptionManager::callback(
