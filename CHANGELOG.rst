@@ -2,8 +2,8 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2026-02-14)
+------------------
 * Fixing reconnect bug by reinitializing the reception queue.
   Cleaning a bit the TF subscription_manager and forcing the timestamp on
   the static tf message.
