@@ -2,45 +2,11 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.0.1 (2026-02-14)
+3.0.0 (2026-02-14)
 ------------------
-* Fixing reconnect bug by reinitializing the reception queue.
-  Cleaning a bit the TF subscription_manager and forcing the timestamp on
-  the static tf message.
 * Add a specific management of TF topics
-* Removed mutex protection in get_data, but kept an explicit flag to
-  define if the data should be considered valid.
-* Added documentation for the include/exclude mechanism in TF.
-* Added a parameter to exclude some TF when transmitting over network
-  bridge
-* Improved management of tf_static by virtualizing is_stale. static tf are
-  never stale.
-* Tried deleting the TF subscriber on error.
-* Added specific qos for static tf, copied from TransformListener
-* Fixed special case of the invalid TF detection
-* Added a detection of inconsistent TF tree.
-  Added configuration information in README
-* Added proper comments to the header file
-* Fixed segfault on disconnect
-* Merge branch 'tf' of github.com:brow1633/network_bridge into tf
-* Server side of subscription manager
-* Server tested version of TF subscriber
-* First part of commit to get a specialized management of TFs
-* Removed useless code in thrift_stream
-  Improved byte reading for large message
-  Removed a memory leak in tcp_interface
-* Add precommit and run on all files
-* whitespace
-* Another run of uncrustify
-* fix whitespace
-* Applied uncrustify to force 2-space indents
-* Fixed the unloading severe warning by adding a shutdown function in
-  network_bridge.
-  Added try-catch in udp_bridge for a clean exit as well.
+* Fixed several bugs
 * Fix formatting in CMakeLists.txt for target_link_libraries
-* Fixed compilation on Kilted
-  Tried to fix class loader unloading warning (Kilted) in
-  network_bridge.cpp
 * Update README with installation instructions
   Added installation instructions for apt and building from source.
 * Contributors: Cedric Pradalier, Ethan Brown
