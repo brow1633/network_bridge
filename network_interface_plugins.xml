@@ -14,4 +14,12 @@
             </description>
         </class>
     </library>
+
+    <library path="zmq_interface">
+        <class name="network_bridge::ZmqInterface" type="network_bridge::ZmqInterface" base_class_type="network_bridge::NetworkInterface">
+            <description>
+                A ZeroMQ network interface for the network bridge.
+            </description>
+        </class>
+    </library>
 </class_libraries>

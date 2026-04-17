@@ -1,0 +1,19 @@
+# Configuration for the ZMQ Server (PUSH)
+/**/network_bridge_server:
+  ros__parameters:
+    network_interface: "network_bridge::ZmqInterface"
+
+    ZmqInterface:
+      role: "server"
+      port: 5555
+
+    default_rate: 10.0
+    default_zstd_level: 3
+    publish_stale_data: False
+
+    # The server subscribes to this topic and pushes it to ZMQ
+    topics:
+      - "/test_topic"
+
+    subscribe_namespace: ""
+    publish_namespace: ""
