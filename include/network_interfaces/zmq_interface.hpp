@@ -36,7 +36,8 @@ SOFTWARE.
 
 #include "network_interfaces/network_interface_base.hpp"
 
-namespace network_bridge {
+namespace network_bridge
+{
 
 /**
  * @class ZmqInterface
@@ -47,14 +48,17 @@ namespace network_bridge {
  * writing data to a ZMQ interface. It also handles receiving data
  * asynchronously and provides error handling capabilities.
  */
-class ZmqInterface : public NetworkInterface {
+class ZmqInterface : public NetworkInterface
+{
 public:
-  ZmqInterface() : NetworkInterface() {
+  ZmqInterface()
+  : NetworkInterface()
+  {
     ready_ = false;
     failed_ = false;
   }
 
-  virtual ~ZmqInterface() { close(); }
+  virtual ~ZmqInterface() {close();}
 
 protected:
   /**
@@ -69,7 +73,7 @@ public:
   bool is_ready() const override;
   void open() override;
   void close() override;
-  void write(const std::vector<uint8_t> &data) override;
+  void write(const std::vector<uint8_t> & data) override;
 
 protected:
   void load_parameters();

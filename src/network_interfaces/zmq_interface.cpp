@@ -29,11 +29,13 @@ SOFTWARE.
 
 #include "network_interfaces/zmq_interface.hpp"
 
-namespace network_bridge {
+namespace network_bridge
+{
 
-void ZmqInterface::initialize_() { load_parameters(); }
+void ZmqInterface::initialize_() {load_parameters();}
 
-void ZmqInterface::load_parameters() {
+void ZmqInterface::load_parameters()
+{
   std::string prefix = "ZmqInterface.";
   node_->declare_parameter(prefix + "role", std::string(""));
   node_->declare_parameter(prefix + "remote_address", std::string(""));
@@ -44,12 +46,14 @@ void ZmqInterface::load_parameters() {
   node_->get_parameter(prefix + "port", port_);
 
   RCLCPP_INFO(node_->get_logger(), "role_: %s", role_.c_str());
-  RCLCPP_INFO(node_->get_logger(), "Remote Address: %s",
-              remote_address_.c_str());
+  RCLCPP_INFO(
+    node_->get_logger(), "Remote Address: %s",
+    remote_address_.c_str());
   RCLCPP_INFO(node_->get_logger(), "Remote Port: %d", port_);
 }
 
-void ZmqInterface::open() {
+void ZmqInterface::open()
+{
   shutting_down_ = false;
   failed_ = false;
   ready_ = false;
@@ -60,20 +64,22 @@ void ZmqInterface::open() {
     setup_client();
     ready_ = true;
     packet_thread_ =
-        std::thread(std::bind(&ZmqInterface::receive_thread, this));
+      std::thread(std::bind(&ZmqInterface::receive_thread, this));
   } else {
-    RCLCPP_ERROR(node_->get_logger(), "Invalid role specified: %s",
-                 role_.c_str());
+    RCLCPP_ERROR(
+      node_->get_logger(), "Invalid role specified: %s",
+      role_.c_str());
     failed_ = true;
     return;
   }
 }
 
-bool ZmqInterface::is_ready() const { return ready_ && !failed_; }
+bool ZmqInterface::is_ready() const {return ready_ && !failed_;}
 
-bool ZmqInterface::has_failed() const { return failed_; }
+bool ZmqInterface::has_failed() const {return failed_;}
 
-void ZmqInterface::close() {
+void ZmqInterface::close()
+{
   if (shutting_down_.exchange(true)) {
     return;
   }
@@ -82,7 +88,7 @@ void ZmqInterface::close() {
   if (socket_) {
     try {
       socket_->close();
-    } catch (const zmqpp::exception &e) {
+    } catch (const zmqpp::exception & e) {
       RCLCPP_ERROR(node_->get_logger(), "ZMQ exception: %s", e.what());
     }
   }
@@ -93,39 +99,43 @@ void ZmqInterface::close() {
 
   try {
     context_.terminate();
-  } catch (const zmqpp::exception &e) {
+  } catch (const zmqpp::exception & e) {
     RCLCPP_ERROR(node_->get_logger(), "ZMQ exception: %s", e.what());
   }
 }
 
-void ZmqInterface::receive_thread() {
+void ZmqInterface::receive_thread()
+{
   zmqpp::poller poller;
   poller.add(*socket_, zmqpp::poller::poll_in);
   while (!shutting_down_ && rclcpp::ok()) {
     if (poller.poll(100)) {
       zmqpp::message msg;
       socket_->receive(msg);
-      const void *data = msg.raw_data(0);
+      const void * data = msg.raw_data(0);
       size_t size = msg.size(0);
       recv_cb_(
-          std::span<const uint8_t>(static_cast<const uint8_t *>(data), size));
+        std::span<const uint8_t>(static_cast<const uint8_t *>(data), size));
     }
   }
 }
 
-void ZmqInterface::setup_server() {
+void ZmqInterface::setup_server()
+{
   socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::push);
   socket_->bind("tcp://*:" + std::to_string(port_));
   RCLCPP_INFO(node_->get_logger(), "Server bound to port %d", port_);
 }
 
-void ZmqInterface::setup_client() {
+void ZmqInterface::setup_client()
+{
   socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::pull);
   socket_->connect("tcp://" + remote_address_ + ":" + std::to_string(port_));
   RCLCPP_INFO(node_->get_logger(), "Client connected to port %d", port_);
 }
 
-void ZmqInterface::write(const std::vector<uint8_t> &data) {
+void ZmqInterface::write(const std::vector<uint8_t> & data)
+{
   zmqpp::message msg;
   msg.add_raw(data.data(), data.size());
   socket_->send(msg);
@@ -133,5 +143,6 @@ void ZmqInterface::write(const std::vector<uint8_t> &data) {
 
 } // namespace network_bridge
 
-PLUGINLIB_EXPORT_CLASS(network_bridge::ZmqInterface,
-                       network_bridge::NetworkInterface)
+PLUGINLIB_EXPORT_CLASS(
+  network_bridge::ZmqInterface,
+  network_bridge::NetworkInterface)
