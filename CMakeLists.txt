@@ -48,6 +48,10 @@ if(BUILD_TESTING)
     test/test_tcp.py
     TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
+  add_launch_test(
+    test/test_zmq.py
+    TIMEOUT 2  # Sets a timeout for the test in seconds
+  )
 endif()
 
 include_directories(include)

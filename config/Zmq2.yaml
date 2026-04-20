@@ -1,5 +1,5 @@
 # Configuration for the ZMQ Client (PULL)
-/**/network_bridge_client:
+/**/zmq_bridge_client:
   ros__parameters:
     network_interface: "network_bridge::ZmqInterface"
 
@@ -12,6 +12,5 @@
     default_zstd_level: 3
     publish_stale_data: False
 
-    # We use a publish namespace so that it doesn't clash with the server's subscription on the same machine
-    subscribe_namespace: ""
-    publish_namespace: "/client_side"
+    subscribe_namespace: "/zmq2"
+    publish_namespace: "/zmq2"

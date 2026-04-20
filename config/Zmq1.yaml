@@ -1,5 +1,5 @@
 # Configuration for the ZMQ Server (PUSH)
-/**/network_bridge_server:
+/**/zmq_bridge_server:
   ros__parameters:
     network_interface: "network_bridge::ZmqInterface"
 
@@ -15,5 +15,5 @@
     topics:
       - "/test_topic"
 
-    subscribe_namespace: ""
-    publish_namespace: ""
+    subscribe_namespace: "/zmq1"
+    publish_namespace: "/zmq1"
