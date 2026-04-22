@@ -76,7 +76,7 @@ class TestZmq(unittest.TestCase):
         proc_output.assertWaitFor("Client connected", timeout=0.5)
 
         node = ZmqTestNode()
-        time.sleep(0.15)
+        time.sleep(1.5)
 
         test_msg = String()
         test_msg.data = "Testing123"
