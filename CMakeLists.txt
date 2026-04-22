@@ -103,10 +103,6 @@ ament_target_dependencies(zmq_interface
   zmqpp_vendor
 )
 
-target_link_libraries(zmq_interface
-  zmqpp
-)
-
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)
 
 install(TARGETS
