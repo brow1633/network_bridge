@@ -123,14 +123,26 @@ void ZmqInterface::receive_thread()
 void ZmqInterface::setup_server()
 {
   socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::push);
-  socket_->bind("tcp://*:" + std::to_string(port_));
+  try {
+    socket_->bind("tcp://*:" + std::to_string(port_));
+  } catch (const zmqpp::exception & e) {
+    RCLCPP_ERROR(node_->get_logger(), "Bind failed: %s", e.what());
+    failed_ = true;
+    return;
+  }
   RCLCPP_INFO(node_->get_logger(), "Server bound to port %d", port_);
 }
 
 void ZmqInterface::setup_client()
 {
   socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::pull);
-  socket_->connect("tcp://" + remote_address_ + ":" + std::to_string(port_));
+  try {
+    socket_->connect("tcp://" + remote_address_ + ":" + std::to_string(port_));
+  } catch (const zmqpp::exception & e) {
+    RCLCPP_ERROR(node_->get_logger(), "Connect failed: %s", e.what());
+    failed_ = true;
+    return;
+  }
   RCLCPP_INFO(node_->get_logger(), "Client connected to port %d", port_);
 }
 
