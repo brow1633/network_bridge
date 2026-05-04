@@ -38,14 +38,17 @@ void ZmqInterface::load_parameters()
 {
   std::string prefix = "ZmqInterface.";
   node_->declare_parameter(prefix + "role", std::string(""));
+  node_->declare_parameter(prefix + "pattern", std::string("pub_sub"));
   node_->declare_parameter(prefix + "remote_address", std::string(""));
   node_->declare_parameter(prefix + "port", 0);
 
   node_->get_parameter(prefix + "role", role_);
+  node_->get_parameter(prefix + "pattern", pattern_);
   node_->get_parameter(prefix + "remote_address", remote_address_);
   node_->get_parameter(prefix + "port", port_);
 
   RCLCPP_INFO(node_->get_logger(), "role_: %s", role_.c_str());
+  RCLCPP_INFO(node_->get_logger(), "pattern_: %s", pattern_.c_str());
   RCLCPP_INFO(
     node_->get_logger(), "Remote Address: %s",
     remote_address_.c_str());
@@ -122,7 +125,9 @@ void ZmqInterface::receive_thread()
 
 void ZmqInterface::setup_server()
 {
-  socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::push);
+  zmqpp::socket_type type =
+    (pattern_ == "pub_sub") ? zmqpp::socket_type::pub : zmqpp::socket_type::push;
+  socket_ = std::make_shared<zmqpp::socket>(context_, type);
   try {
     socket_->bind("tcp://*:" + std::to_string(port_));
   } catch (const zmqpp::exception & e) {
@@ -135,7 +140,12 @@ void ZmqInterface::setup_server()
 
 void ZmqInterface::setup_client()
 {
-  socket_ = std::make_shared<zmqpp::socket>(context_, zmqpp::socket_type::pull);
+  zmqpp::socket_type type =
+    (pattern_ == "pub_sub") ? zmqpp::socket_type::sub : zmqpp::socket_type::pull;
+  socket_ = std::make_shared<zmqpp::socket>(context_, type);
+  if (pattern_ == "pub_sub") {
+    socket_->subscribe("");
+  }
   try {
     socket_->connect("tcp://" + remote_address_ + ":" + std::to_string(port_));
   } catch (const zmqpp::exception & e) {

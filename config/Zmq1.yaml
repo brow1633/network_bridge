@@ -1,10 +1,11 @@
-# Configuration for the ZMQ Server (PUSH)
+# Configuration for the ZMQ Server (PUSH/PULL or PUB/SUB)
 /**/zmq_bridge_server:
   ros__parameters:
     network_interface: "network_bridge::ZmqInterface"
 
     ZmqInterface:
       role: "server"
+      # pattern: "pub_sub" # Options: pub_sub (default) or push_pull
       port: 5555
 
     default_rate: 10.0

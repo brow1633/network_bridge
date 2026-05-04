@@ -86,6 +86,7 @@ private:
   std::shared_ptr<zmqpp::socket> socket_;
 
   std::string role_;
+  std::string pattern_;
   std::string remote_address_;
   int port_;
   std::atomic<bool> ready_;
