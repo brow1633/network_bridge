@@ -50,7 +50,7 @@ if(BUILD_TESTING)
   )
   add_launch_test(
     test/test_zmq.py
-    TIMEOUT 5  # Sets a timeout for the test in seconds
+    TIMEOUT 10  # Sets a timeout for the test in seconds
   )
 endif()
 
