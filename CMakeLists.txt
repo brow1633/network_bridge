@@ -97,11 +97,27 @@ target_link_libraries(tcp_interface PUBLIC
   Threads::Threads
 )
 
-ament_target_dependencies(zmq_interface
-  rclcpp
-  pluginlib
-  zmqpp_vendor
-)
+if(DEFINED zmqpp_vendor_INCLUDE_DIRS)
+  target_include_directories(zmq_interface PUBLIC
+    ${zmqpp_vendor_INCLUDE_DIRS}
+  )
+endif()
+
+if(DEFINED zmqpp_vendor_TARGETS)
+  target_link_libraries(zmq_interface PUBLIC
+    rclcpp::rclcpp
+    pluginlib::pluginlib
+    ${zmqpp_vendor_TARGETS}
+  )
+endif()
+
+if(DEFINED zmqpp_vendor_LIBRARIES)
+  target_link_libraries(zmq_interface PUBLIC
+    rclcpp::rclcpp
+    pluginlib::pluginlib
+    ${zmqpp_vendor_LIBRARIES}
+  )
+endif()
 
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)
 
