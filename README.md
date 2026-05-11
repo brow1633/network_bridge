@@ -126,6 +126,16 @@ If some TFs need to be excluded or if the list of TFs to include is finite, one 
 - **TCP**: Opt for TCP when data integrity and reliability are critical. This ensures that control commands and state transitions are reliably delivered, though with potentially higher latency.
 - **ZMQ**: Use ZMQ for reliable, high-performance messaging patterns. It provides a more robust and flexible communication architecture compared to raw TCP/UDP, abstracting away complex socket management.
 
+#### ZMQ Communication Patterns
+
+ZMQ supports multiple messaging patterns. This package currently supports two, configurable via the `pattern` parameter:
+
+- **PUB/SUB** (`pattern: pub_sub`): One publisher broadcasts messages to multiple subscribers. Best for one-to-many data distribution (e.g., sensor streams to multiple consumers). Subscribers receive only the topics they subscribe to; late-joining subscribers miss messages sent before connection.
+
+- **PUSH/PULL** (`pattern: push_pull`): One pusher sends messages to a pool of pullers in a round-robin fashion. Best for load-balanced pipelines where each message must be processed by exactly one consumer. Provides back-pressure and queuing, unlike PUB/SUB.
+
+### Network Protocol Implementation
+
 Network protocols are implemented as pluginlib plugins, allowing the creation of arbitrary interfaces using the abstract class `include/network_interfaces/network_interface_base.hpp`.  Any interface that can send and receive bytes could theoretically be implemented, including protocols that go beyond point-to-point communication.  Please consider opening a pull request if you implement a new network interface.
 
 ### Tuning
