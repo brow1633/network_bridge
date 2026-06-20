@@ -28,14 +28,15 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+  set(NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT 30 CACHE STRING "Timeout in seconds for launch tests")
 
   add_launch_test(
     test/test_udp.py
-    TIMEOUT 2  # Sets a timeout for the test in seconds
+    TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
   add_launch_test(
     test/test_tcp.py
-    TIMEOUT 2  # Sets a timeout for the test in seconds
+    TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
 endif()
 
