@@ -27,6 +27,9 @@ SOFTWARE.
 #include <boost/asio/steady_timer.hpp>
 
 #include "network_interfaces/tcp_interface.hpp"
+#include "boost/format.hpp"
+using boost::format;
+using boost::str;
 
 namespace network_bridge
 {
@@ -221,15 +224,18 @@ void TcpInterface::setup_client()
   boost::system::error_code ec;
   bool fatal = !shutting_down_;
 
-  tcp::endpoint endpoint(
-    address::from_string(remote_address_), port_);
+  tcp::resolver resolver(io_context_);
+  tcp::resolver::results_type endpoints = resolver.resolve(
+    remote_address_,
+    str(format("%d") % port_));
+
   error_handler(
     ec, "Failed to connect to server: check address and port.", fatal);
 
 
   socket_.reset(new tcp::socket(io_context_));
   while (rclcpp::ok()) {
-    socket_->connect(endpoint, ec);
+    boost::asio::connect(*socket_, endpoints, ec);
     if (!ec) {
       RCLCPP_INFO(
         node_->get_logger(), "Connected to server at %s:%u",

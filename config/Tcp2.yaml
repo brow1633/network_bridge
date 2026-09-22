@@ -5,7 +5,8 @@
 
     TcpInterface:
       role: "client" # "client" or "server"
-      remote_address: "127.0.0.1" # IP of the server
+      # remote_address: "127.0.0.1" # IP of the server
+      remote_address: "localhost" # IP of the server
       port: 5000 # Desired port to connect to
 
     default_rate: 100.0
