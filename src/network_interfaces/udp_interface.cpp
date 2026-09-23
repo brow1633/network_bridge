@@ -115,9 +115,10 @@ void UdpInterface::setup_udp()
   udp::resolver::query send_query(udp::v4(), remote_address_,
     str(format("%d") % send_port_));
   iter = resolver.resolve(send_query, ec);
+  error_handler(ec, "Failed to parse remote address", fatal);
+
   send_endpoint_ = *iter;
 
-  error_handler(ec, "Failed to parse remote address", fatal);
 
   RCLCPP_INFO(
     node_->get_logger(),
@@ -136,8 +137,9 @@ void UdpInterface::setup_udp()
   udp::resolver::query recv_query(udp::v4(), local_address_,
     str(format("%d") % receive_port_));
   iter = resolver.resolve(recv_query, ec);
-  receive_endpoint_ = *iter;
   error_handler(ec, "Failed to parse local address", fatal);
+
+  receive_endpoint_ = *iter;
 
   receive_socket_.bind(receive_endpoint_, ec);
   error_handler(ec, "Failed to bind receiving socket", fatal);
