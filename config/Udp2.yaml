@@ -4,7 +4,7 @@
     network_interface: "network_bridge::UdpInterface"
 
     UdpInterface:
-      local_address: "localhost" #e.g. 10.8.0.2
+      local_address: "127.0.0.1" #e.g. 10.8.0.2
       receive_port: 5001
       remote_address: "127.0.0.1" #e.g. 10.8.0.1
       send_port: 5000
@@ -16,7 +16,7 @@
     publish_stale_data: False
 
     topics:
-      - "/turtle1/cmd_vel"
+      - "/MyDefaultTopic2"
 
-    #subscribe_namespace: "/udp2"
+    subscribe_namespace: "/udp2"
     publish_namespace: "/udp2"

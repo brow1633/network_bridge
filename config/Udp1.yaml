@@ -16,7 +16,7 @@
 
     UdpInterface:
       # This machines local IP (e.g. on LAN, VPN, etc)
-      local_address: "localhost" #e.g. 10.8.0.1
+      local_address: "127.0.0.1" #e.g. 10.8.0.1
 
       # Desired receive port (must be send port of remote)
       receive_port: 5000
@@ -50,10 +50,9 @@
     publish_stale_data: False
 
     # List all topics that are to be sent over the network interface
-    # Can be tested by running:
-    # ros2 topic pub /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.8}}"
     topics:
-      - "/turtle1/cmd_vel"
+      - "/MyDefaultTopic"
+      - "/MySpecialTopic"
 
     # Defaults can be overridden for all topics
     /MySpecialTopic:
@@ -61,7 +60,7 @@
       zstd_level: 5
 
     # Namespace to be applied to subscribed topics
-    # subscribe_namespace: "/udp1"
+    subscribe_namespace: "/udp1"
 
     ###
     ## Parameters for Network->ROS2
