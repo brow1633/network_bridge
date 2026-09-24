@@ -92,6 +92,7 @@ install(TARGETS
 install(DIRECTORY
   config
   launch
+  demo
   DESTINATION share/${PROJECT_NAME}
 )
 

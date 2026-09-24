@@ -1,0 +1,36 @@
+# See Udp1.yaml for parameter descriptions
+/**/*:
+  ros__parameters:
+    network_interface: "network_bridge::TcpInterface"
+
+    TcpInterface:
+      role: "server" # "client" or "server"
+      port: 5000 # Desired port to listen on
+
+    UdpInterface:
+      # This machines local IP (e.g. on LAN, VPN, etc)
+      local_address: "127.0.0.1"
+      receive_port: 5000
+
+      # Remote's IP address
+      remote_address: "127.0.0.1"
+      send_port: 5001
+
+
+    default_rate: 2.0
+
+    default_zstd_level: 3
+
+    publish_stale_data: False
+
+    topics:
+      - "/chatter"
+      - "/tf"
+      - "/tf_static"
+
+
+    /tf:
+      rate: 10.0
+
+    subscribe_namespace: "/server"
+    publish_namespace: "/client"
