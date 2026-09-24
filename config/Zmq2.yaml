@@ -1,0 +1,17 @@
+# Configuration for the ZMQ Client (PUSH/PULL or PUB/SUB)
+/**/zmq_bridge_client:
+  ros__parameters:
+    network_interface: "network_bridge::ZmqInterface"
+
+    ZmqInterface:
+      role: "client"
+      # pattern: "pub_sub" # Options: pub_sub (default) or push_pull
+      remote_address: "127.0.0.1"
+      port: 5555
+
+    default_rate: 10.0
+    default_zstd_level: 3
+    publish_stale_data: False
+
+    subscribe_namespace: "/zmq2"
+    publish_namespace: "/zmq2"
