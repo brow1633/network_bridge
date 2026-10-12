@@ -43,5 +43,7 @@ jobs:
         env: # either pass all entries explicitly
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
           ROS_REPO: ${{ matrix.ROS_REPO }}
+          # Lyrical has no binary zmqpp_vendor package yet.
+          UPSTREAM_WORKSPACE: ${{ matrix.ROS_DISTRO == 'lyrical' && 'github:autowarefoundation/zmqpp_vendor#226b51cfa81c737000b411c8d50c202d6c5bc1e6' || '' }}
           # Resolute provides colcon and its extensions through Ubuntu packages.
           BEFORE_COLCON_SETUP: ${{ (matrix.ROS_DISTRO == 'rolling' || matrix.ROS_DISTRO == 'lyrical') && 'apt-get install -y --install-recommends colcon' || '' }}
