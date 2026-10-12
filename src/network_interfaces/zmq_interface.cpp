@@ -72,6 +72,7 @@ void ZmqInterface::load_parameters()
 void ZmqInterface::open()
 {
   close();
+  context_ = std::make_unique<zmqpp::context>();
   shutting_down_ = false;
   failed_ = false;
   ready_ = false;
@@ -109,7 +110,8 @@ void ZmqInterface::close()
     packet_thread_.join();
   }
   socket_.reset();
-  // Keep the context alive: the bridge reuses this interface on reconnect.
+  // Context destruction waits for asynchronous socket cleanup before reopening.
+  context_.reset();
 
 }
 
@@ -139,7 +141,7 @@ void ZmqInterface::setup_server()
 {
   zmqpp::socket_type type =
     (pattern_ == "pub_sub") ? zmqpp::socket_type::pub : zmqpp::socket_type::push;
-  socket_ = std::make_shared<zmqpp::socket>(context_, type);
+  socket_ = std::make_shared<zmqpp::socket>(*context_, type);
   socket_->set(zmqpp::socket_option::linger, 0);
   try {
     socket_->bind("tcp://*:" + std::to_string(port_));
@@ -155,7 +157,7 @@ void ZmqInterface::setup_client()
 {
   zmqpp::socket_type type =
     (pattern_ == "pub_sub") ? zmqpp::socket_type::sub : zmqpp::socket_type::pull;
-  socket_ = std::make_shared<zmqpp::socket>(context_, type);
+  socket_ = std::make_shared<zmqpp::socket>(*context_, type);
   socket_->set(zmqpp::socket_option::linger, 0);
   if (pattern_ == "pub_sub") {
     socket_->subscribe("");

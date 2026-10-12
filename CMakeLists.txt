@@ -21,6 +21,7 @@ find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZSTD REQUIRED libzstd)
+pkg_check_modules(ZMQ REQUIRED IMPORTED_TARGET libzmq)
 find_package(zmqpp_vendor REQUIRED)
 
 if(BUILD_TESTING)
@@ -98,6 +99,7 @@ target_link_libraries(tcp_interface PUBLIC
 )
 
 target_link_libraries(zmq_interface PUBLIC
+  PkgConfig::ZMQ
   rclcpp::rclcpp
   pluginlib::pluginlib
   Threads::Threads

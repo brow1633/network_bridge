@@ -30,6 +30,7 @@
   <depend>tf2_ros</depend>
   <depend>pluginlib</depend>
   <depend>zmqpp_vendor</depend>
+  <depend>libzmq3-dev</depend>
 
 
   <export>

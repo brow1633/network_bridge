@@ -82,7 +82,7 @@ protected:
   void receive_thread();
 
 private:
-  zmqpp::context context_;
+  std::unique_ptr<zmqpp::context> context_;
   std::shared_ptr<zmqpp::socket> socket_;
 
   std::string role_;
