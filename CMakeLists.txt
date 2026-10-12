@@ -21,6 +21,11 @@ find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZSTD REQUIRED libzstd)
+pkg_check_modules(ZMQ REQUIRED IMPORTED_TARGET libzmq)
+find_path(CPPZMQ_INCLUDE_DIR zmq.hpp HINTS ${ZMQ_INCLUDE_DIRS})
+if(NOT CPPZMQ_INCLUDE_DIR)
+  message(FATAL_ERROR "cppzmq headers not found; install the libzmq3-dev rosdep dependency")
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
@@ -47,6 +52,10 @@ if(BUILD_TESTING)
     test/test_tcp.py
     TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
+  add_launch_test(
+    test/test_zmq.py
+    TIMEOUT 60
+  )
 endif()
 
 include_directories(include)
@@ -63,6 +72,10 @@ add_library(udp_interface SHARED
 
 add_library(tcp_interface SHARED
   src/network_interfaces/tcp_interface.cpp
+)
+
+add_library(zmq_interface SHARED
+  src/network_interfaces/zmq_interface.cpp
 )
 
 target_link_libraries(network_bridge PUBLIC
@@ -88,6 +101,22 @@ target_link_libraries(tcp_interface PUBLIC
   Threads::Threads
 )
 
+target_link_libraries(zmq_interface PUBLIC
+  PkgConfig::ZMQ
+  rclcpp::rclcpp
+  pluginlib::pluginlib
+  Threads::Threads
+)
+
+target_include_directories(zmq_interface PUBLIC ${CPPZMQ_INCLUDE_DIR})
+
+if(BUILD_TESTING)
+  ament_add_gtest(test_zmq_interface test/test_zmq_interface.cpp TIMEOUT 15)
+  if(TARGET test_zmq_interface)
+    target_link_libraries(test_zmq_interface zmq_interface Boost::headers)
+  endif()
+endif()
+
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)
 
 install(TARGETS
@@ -98,6 +127,7 @@ install(TARGETS
 install(TARGETS
   udp_interface
   tcp_interface
+  zmq_interface
   DESTINATION lib/
 )
 
