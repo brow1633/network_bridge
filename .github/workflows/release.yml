@@ -27,6 +27,11 @@ jobs:
           persist-credentials: false
       - name: Release using Bloom
         uses: at-wat/bloom-release-action@v0.0.13
+        env:
+          # Bloom's -y does not suppress optional rosdistro metadata prompts.
+          BLOOM_DONT_ASK_FOR_DOCS: '1'
+          BLOOM_DONT_ASK_FOR_SOURCE: '1'
+          BLOOM_DONT_ASK_FOR_MAINTENANCE_STATUS: '1'
         with:
           ros_distro: ${{ inputs.ros_distros }}
           github_token_bloom: ${{ secrets.BLOOM_RELEASE_TOKEN }}
