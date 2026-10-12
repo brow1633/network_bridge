@@ -17,11 +17,19 @@ find_package(std_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
+find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZSTD REQUIRED libzstd)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_core test/test_core.cpp TIMEOUT 10)
+  if(TARGET test_core)
+    target_include_directories(test_core PRIVATE include)
+    target_link_libraries(test_core Threads::Threads)
+  endif()
+
   find_package(launch_testing_ament_cmake REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
@@ -29,13 +37,15 @@ if(BUILD_TESTING)
   set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
+  set(NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT 30 CACHE STRING "Timeout in seconds for launch tests")
+
   add_launch_test(
     test/test_udp.py
-    TIMEOUT 2  # Sets a timeout for the test in seconds
+    TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
   add_launch_test(
     test/test_tcp.py
-    TIMEOUT 2  # Sets a timeout for the test in seconds
+    TIMEOUT ${NETWORK_BRIDGE_LAUNCH_TEST_TIMEOUT}
   )
 endif()
 
@@ -67,13 +77,15 @@ target_link_libraries(network_bridge PUBLIC
 target_link_libraries(udp_interface PUBLIC
   pluginlib::pluginlib
   rclcpp::rclcpp
-  ${Boost_LIBRARIES}
+  Boost::headers
+  Threads::Threads
 )
 
 target_link_libraries(tcp_interface PUBLIC
   pluginlib::pluginlib
   rclcpp::rclcpp
-  ${Boost_LIBRARIES}
+  Boost::headers
+  Threads::Threads
 )
 
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)

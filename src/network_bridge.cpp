@@ -25,11 +25,14 @@ SOFTWARE.
 */
 
 #include "network_bridge/network_bridge.hpp"
+#include "network_bridge/packet_header.hpp"
 
 #include <zstd.h>
 #include <span>
 #include <fstream>
 #include <bit>
+#include <cmath>
+#include <stdexcept>
 
 #include <rclcpp/serialization.hpp>
 #include <pluginlib/class_loader.hpp>
@@ -146,6 +149,9 @@ void NetworkBridge::load_parameters()
     this->get_parameter(is_tf_param_name, is_tf);
     this->get_parameter(rate_param_name, rate);
     this->get_parameter(zstd_level_param_name, zstd_level);
+    if (!std::isfinite(rate) || rate <= 0.0 || rate > 1000.0) {
+      throw std::invalid_argument(rate_param_name + " must be finite and in (0, 1000] Hz");
+    }
 
     if (is_tf) {
       // Add this parameter to force the static tf nature if needed
@@ -267,6 +273,7 @@ void NetworkBridge::receive_data(std::span<const uint8_t> data)
     RCLCPP_ERROR(
       this->get_logger(),
       "Decompression Failed: %s", e.what());
+    return;
   }
 
   std::string topic;
@@ -408,17 +415,9 @@ void NetworkBridge::parse_header(
   std::string & topic, std::string & msg_type,
   double & time)
 {
-  // Add 4 for minimum usable header size
-  // (1 char for topic, 1 for msg_type, and 2 null terminators)
-  if (header.size() < sizeof(time) + 4) {
+  if (!network_bridge::parse_packet_header(header, topic, msg_type, time)) {
     RCLCPP_ERROR(this->get_logger(), "Malformed header!");
-    return;
   }
-
-  time = std::bit_cast<double>(header.data());
-  topic = reinterpret_cast<const char *>(header.data() + sizeof(time));
-  msg_type = reinterpret_cast<const char *>(
-    header.data() + sizeof(time) + topic.size() + 1);
 }
 
 void NetworkBridge::compress(

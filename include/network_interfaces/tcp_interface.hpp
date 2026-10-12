@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <string>
 
@@ -105,9 +106,9 @@ private:
   std::string role_;
   std::string remote_address_;
   int port_;
-  bool ready_;
-  bool failed_;
-  bool shutting_down_;
+  std::atomic<bool> ready_{false};
+  std::atomic<bool> failed_{false};
+  std::atomic<bool> shutting_down_{true};
 
   io_context io_context_;
   std::shared_ptr<tcp::socket> socket_;

@@ -96,26 +96,28 @@ bool TcpInterface::has_failed() const
 void TcpInterface::close()
 {
   shutting_down_ = true;
-  if (acceptor_) {
-    acceptor_->close();
-  }
-  acceptor_.reset();
-  if (socket_) {
-    socket_->close();
-  }
-  socket_.reset();
+  ready_ = false;
   stream_.shutdown();
-  try {
-    packet_thread_.join();
-  } catch (std::system_error &) {
-    // the thread was not started
-  }
   io_context_.stop();
-  try {
+  if (io_thread_.joinable()) {
     io_thread_.join();
-  } catch (std::system_error &) {
-    // the thread was not started
   }
+  if (packet_thread_.joinable()) {
+    packet_thread_.join();
+  }
+  // No callbacks may access the sockets after the worker threads have joined.
+  boost::system::error_code ec;
+  if (acceptor_) {
+    acceptor_->close(ec);
+  }
+  if (socket_) {
+    socket_->close(ec);
+  }
+  // Drain canceled handlers before a later open() creates new sockets.
+  io_context_.restart();
+  io_context_.poll();
+  acceptor_.reset();
+  socket_.reset();
 }
 
 void TcpInterface::receive_thread()
@@ -227,7 +229,7 @@ void TcpInterface::setup_client()
   tcp::resolver resolver(io_context_);
   tcp::resolver::results_type endpoints = resolver.resolve(
     remote_address_,
-    str(format("%d") % port_));
+    std::to_string(port_), ec);
 
   error_handler(
     ec, "Failed to connect to server: check address and port.", fatal);
@@ -285,6 +287,7 @@ void TcpInterface::start_receive()
 
 void TcpInterface::receive(const boost::system::error_code & error, size_t rlen)
 {
+  if (shutting_down_) {return;}
   if (!error) {
     stream_.pushBytes(receive_buffer_.begin(), receive_buffer_.begin() + rlen);
     start_receive();

@@ -19,8 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ROS_DISTRO: [humble, iron, jazzy, kilted, rolling]
+        ROS_DISTRO: [humble, jazzy, kilted, lyrical, rolling]
         ROS_REPO: [main, testing]
+        # Rolling packages for Resolute are currently published in testing only.
+        exclude:
+          - ROS_DISTRO: rolling
+            ROS_REPO: main
 
     env:
       CCACHE_DIR: "${{ github.workspace }}/.ccache" # directory for ccache (and how we enable ccache in industrial_ci)
@@ -39,3 +43,5 @@ jobs:
         env: # either pass all entries explicitly
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
           ROS_REPO: ${{ matrix.ROS_REPO }}
+          # Resolute provides colcon and its extensions through Ubuntu packages.
+          BEFORE_COLCON_SETUP: ${{ (matrix.ROS_DISTRO == 'rolling' || matrix.ROS_DISTRO == 'lyrical') && 'apt-get install -y --install-recommends colcon' || '' }}

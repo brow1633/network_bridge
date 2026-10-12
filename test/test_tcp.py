@@ -45,7 +45,7 @@ def generate_test_description():
 class TcpTestNode(Node):
 
     def __init__(self):
-        super().__init__("test_node")
+        super().__init__("tcp_test_node")
         self.test_message_received = Future()
         self.received_msg = None
         self.publisher = self.create_publisher(String, "/tcp1/MyDefaultTopic", 10)
@@ -58,7 +58,8 @@ class TcpTestNode(Node):
 
     def listener_callback(self, msg):
         self.received_msg = msg
-        self.test_message_received.set_result(True)
+        if not self.test_message_received.done():
+            self.test_message_received.set_result(True)
 
 
 class TestTcp(unittest.TestCase):
@@ -72,19 +73,18 @@ class TestTcp(unittest.TestCase):
         rclpy.shutdown()
 
     def test_node_output(self, proc_output):
-        proc_output.assertWaitFor("Accepted connection", timeout=0.5)
-
         node = TcpTestNode()
-        time.sleep(0.15)
 
         test_msg = String()
         test_msg.data = "Testing123"
-        node.publish(test_msg)
 
         try:
-            rclpy.spin_until_future_complete(
-                node, node.test_message_received, timeout_sec=10.0
-            )
+            # Discovery and bridge subscriptions are asynchronous. Retry until
+            # delivery rather than assuming a fixed startup delay is sufficient.
+            deadline = time.monotonic() + 15.0
+            while not node.test_message_received.done() and time.monotonic() < deadline:
+                node.publish(test_msg)
+                rclpy.spin_once(node, timeout_sec=0.1)
             self.assertTrue(
                 node.test_message_received.done(), "Timeout on message receival."
             )
