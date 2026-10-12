@@ -124,7 +124,7 @@ If some TFs need to be excluded or if the list of TFs to include is finite, one 
 
 - **UDP**: Use UDP for low-latency, high-throughput communications, where occasional data loss is tolerable. Ideal for real-time telemetry data like sensor streams.
 - **TCP**: Opt for TCP when data integrity and reliability are critical. This ensures that control commands and state transitions are reliably delivered, though with potentially higher latency.
-- **ZMQ**: Use ZMQ for reliable, high-performance messaging patterns. It provides a more robust and flexible communication architecture compared to raw TCP/UDP, abstracting away complex socket management.
+- **ZMQ**: Use ZMQ for one-to-many PUB/SUB delivery or PUSH/PULL load distribution. These interfaces are unidirectional: servers send and clients receive. Run a second pair for communication in the other direction.
 
 #### ZMQ Communication Patterns
 
@@ -132,7 +132,7 @@ ZMQ supports multiple messaging patterns. This package currently supports two, c
 
 - **PUB/SUB** (`pattern: pub_sub`): One publisher broadcasts messages to multiple subscribers. Best for one-to-many data distribution (e.g., sensor streams to multiple consumers). Subscribers receive only the topics they subscribe to; late-joining subscribers miss messages sent before connection.
 
-- **PUSH/PULL** (`pattern: push_pull`): One pusher sends messages to a pool of pullers in a round-robin fashion. Best for load-balanced pipelines where each message must be processed by exactly one consumer. Provides back-pressure and queuing, unlike PUB/SUB.
+- **PUSH/PULL** (`pattern: push_pull`): One pusher sends messages to a pool of pullers in a round-robin fashion. Best for load-balanced pipelines where each message must be processed by exactly one consumer. The bridge sends without blocking its ROS executor. Samples are dropped when the send queue is unavailable, so this does not guarantee delivery of every ROS message.
 
 ### Network Protocol Implementation
 

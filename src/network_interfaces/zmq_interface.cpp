@@ -26,6 +26,7 @@ SOFTWARE.
 */
 
 #include <span>
+#include <stdexcept>
 
 #include "network_interfaces/zmq_interface.hpp"
 
@@ -47,6 +48,19 @@ void ZmqInterface::load_parameters()
   node_->get_parameter(prefix + "remote_address", remote_address_);
   node_->get_parameter(prefix + "port", port_);
 
+  if (role_ != "server" && role_ != "client") {
+    throw std::invalid_argument("ZmqInterface.role must be server or client");
+  }
+  if (pattern_ != "pub_sub" && pattern_ != "push_pull") {
+    throw std::invalid_argument("ZmqInterface.pattern must be pub_sub or push_pull");
+  }
+  if (port_ < 1 || port_ > 65535) {
+    throw std::invalid_argument("ZmqInterface.port must be in [1, 65535]");
+  }
+  if (role_ == "client" && remote_address_.empty()) {
+    throw std::invalid_argument("ZmqInterface.remote_address is required for clients");
+  }
+
   RCLCPP_INFO(node_->get_logger(), "role_: %s", role_.c_str());
   RCLCPP_INFO(node_->get_logger(), "pattern_: %s", pattern_.c_str());
   RCLCPP_INFO(
@@ -57,15 +71,17 @@ void ZmqInterface::load_parameters()
 
 void ZmqInterface::open()
 {
+  close();
   shutting_down_ = false;
   failed_ = false;
   ready_ = false;
   if (role_ == "server") {
     setup_server();
-    ready_ = true;
+    ready_ = !failed_;
   } else if (role_ == "client") {
     setup_client();
-    ready_ = true;
+    ready_ = !failed_;
+    if (failed_) {return;}
     packet_thread_ =
       std::thread(std::bind(&ZmqInterface::receive_thread, this));
   } else {
@@ -88,38 +104,34 @@ void ZmqInterface::close()
   }
   ready_ = false;
 
-  if (socket_) {
-    try {
-      socket_->close();
-    } catch (const zmqpp::exception & e) {
-      RCLCPP_ERROR(node_->get_logger(), "ZMQ exception: %s", e.what());
-    }
-  }
-
+  // The client socket belongs to the receive thread until it exits.
   if (packet_thread_.joinable()) {
     packet_thread_.join();
   }
+  socket_.reset();
+  // Keep the context alive: the bridge reuses this interface on reconnect.
 
-  try {
-    context_.terminate();
-  } catch (const zmqpp::exception & e) {
-    RCLCPP_ERROR(node_->get_logger(), "ZMQ exception: %s", e.what());
-  }
 }
 
 void ZmqInterface::receive_thread()
 {
-  zmqpp::poller poller;
-  poller.add(*socket_, zmqpp::poller::poll_in);
-  while (!shutting_down_ && rclcpp::ok()) {
-    if (poller.poll(100)) {
-      zmqpp::message msg;
-      socket_->receive(msg);
-      const void * data = msg.raw_data(0);
-      size_t size = msg.size(0);
-      recv_cb_(
-        std::span<const uint8_t>(static_cast<const uint8_t *>(data), size));
+  try {
+    zmqpp::poller poller;
+    poller.add(*socket_, zmqpp::poller::poll_in);
+    while (!shutting_down_ && rclcpp::ok()) {
+      if (poller.poll(100)) {
+        zmqpp::message msg;
+        if (!socket_->receive(msg, true) || msg.parts() != 1) {continue;}
+        const void * data = msg.raw_data(0);
+        size_t size = msg.size(0);
+        recv_cb_(
+          std::span<const uint8_t>(static_cast<const uint8_t *>(data), size));
+      }
     }
+  } catch (const std::exception & e) {
+    failed_ = true;
+    ready_ = false;
+    RCLCPP_ERROR(node_->get_logger(), "ZMQ receive failed: %s", e.what());
   }
 }
 
@@ -128,6 +140,7 @@ void ZmqInterface::setup_server()
   zmqpp::socket_type type =
     (pattern_ == "pub_sub") ? zmqpp::socket_type::pub : zmqpp::socket_type::push;
   socket_ = std::make_shared<zmqpp::socket>(context_, type);
+  socket_->set(zmqpp::socket_option::linger, 0);
   try {
     socket_->bind("tcp://*:" + std::to_string(port_));
   } catch (const zmqpp::exception & e) {
@@ -143,6 +156,7 @@ void ZmqInterface::setup_client()
   zmqpp::socket_type type =
     (pattern_ == "pub_sub") ? zmqpp::socket_type::sub : zmqpp::socket_type::pull;
   socket_ = std::make_shared<zmqpp::socket>(context_, type);
+  socket_->set(zmqpp::socket_option::linger, 0);
   if (pattern_ == "pub_sub") {
     socket_->subscribe("");
   }
@@ -158,12 +172,22 @@ void ZmqInterface::setup_client()
 
 void ZmqInterface::write(const std::vector<uint8_t> & data)
 {
-  zmqpp::message msg;
-  msg.add_raw(data.data(), data.size());
-  socket_->send(msg);
+  if (!is_ready() || role_ != "server") {return;}
+  try {
+    zmqpp::message msg;
+    msg.add_raw(data.data(), data.size());
+    // Do not stall the ROS executor when a PUSH peer is absent or congested.
+    if (!socket_->send(msg, true)) {
+      RCLCPP_WARN(node_->get_logger(), "ZMQ send queue unavailable; dropping sample");
+    }
+  } catch (const std::exception & e) {
+    failed_ = true;
+    ready_ = false;
+    RCLCPP_ERROR(node_->get_logger(), "ZMQ send failed: %s", e.what());
+  }
 }
 
-} // namespace network_bridge
+}  // namespace network_bridge
 
 PLUGINLIB_EXPORT_CLASS(
   network_bridge::ZmqInterface,

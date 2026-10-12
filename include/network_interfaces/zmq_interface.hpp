@@ -91,9 +91,9 @@ private:
   int port_;
   std::atomic<bool> ready_;
   std::atomic<bool> failed_;
-  std::atomic<bool> shutting_down_;
+  std::atomic<bool> shutting_down_{true};
 
   std::thread packet_thread_;
 };
 
-} // namespace network_bridge
+}  // namespace network_bridge

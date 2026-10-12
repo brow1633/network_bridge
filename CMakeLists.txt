@@ -50,7 +50,7 @@ if(BUILD_TESTING)
   )
   add_launch_test(
     test/test_zmq.py
-    TIMEOUT 10  # Sets a timeout for the test in seconds
+    TIMEOUT 60
   )
 endif()
 
@@ -97,26 +97,25 @@ target_link_libraries(tcp_interface PUBLIC
   Threads::Threads
 )
 
-if(DEFINED zmqpp_vendor_INCLUDE_DIRS)
-  target_include_directories(zmq_interface PUBLIC
-    ${zmqpp_vendor_INCLUDE_DIRS}
-  )
+target_link_libraries(zmq_interface PUBLIC
+  rclcpp::rclcpp
+  pluginlib::pluginlib
+  Threads::Threads
+)
+
+# New vendor releases export the upstream target; older releases export variables.
+if(TARGET zmqpp)
+  target_link_libraries(zmq_interface PUBLIC zmqpp)
+else()
+  target_include_directories(zmq_interface PUBLIC ${zmqpp_vendor_INCLUDE_DIRS})
+  target_link_libraries(zmq_interface PUBLIC ${zmqpp_vendor_LIBRARIES})
 endif()
 
-if(DEFINED zmqpp_vendor_TARGETS)
-  target_link_libraries(zmq_interface PUBLIC
-    rclcpp::rclcpp
-    pluginlib::pluginlib
-    ${zmqpp_vendor_TARGETS}
-  )
-endif()
-
-if(DEFINED zmqpp_vendor_LIBRARIES)
-  target_link_libraries(zmq_interface PUBLIC
-    rclcpp::rclcpp
-    pluginlib::pluginlib
-    ${zmqpp_vendor_LIBRARIES}
-  )
+if(BUILD_TESTING)
+  ament_add_gtest(test_zmq_interface test/test_zmq_interface.cpp TIMEOUT 15)
+  if(TARGET test_zmq_interface)
+    target_link_libraries(test_zmq_interface zmq_interface Boost::headers)
+  endif()
 endif()
 
 pluginlib_export_plugin_description_file(network_bridge network_interface_plugins.xml)

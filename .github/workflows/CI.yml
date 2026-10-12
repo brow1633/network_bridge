@@ -5,7 +5,7 @@ name: CI
 
 on: # this determines when this workflow is run
   push:
-    branches: [ main ]
+    branches: [ main, codex/zmq-review ]
   pull_request:
     branches: [ main ]
   release:

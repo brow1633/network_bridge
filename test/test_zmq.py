@@ -6,6 +6,7 @@ import launch
 import launch.actions
 import launch_ros.actions
 import launch_testing
+import launch_testing.asserts
 import rclpy
 from rclpy.node import Node
 from rclpy.task import Future
@@ -39,7 +40,7 @@ def generate_test_description():
         name="zmq_bridge_server_push",
         output="screen",
         parameters=[config + "Zmq1PushPull.yaml"],
-        arguments=["--ros-args", "--log-level", "debug", "--log-level", "rcl:=info"]
+        arguments=["--ros-args", "--log-level", "debug", "--log-level", "rcl:=info"],
     )
 
     zmq2_push_pull = launch_ros.actions.Node(
@@ -48,7 +49,7 @@ def generate_test_description():
         name="zmq_bridge_client_pull",
         output="screen",
         parameters=[config + "Zmq2PushPull.yaml"],
-        arguments=["--ros-args", "--log-level", "debug", "--log-level", "rcl:=info"]
+        arguments=["--ros-args", "--log-level", "debug", "--log-level", "rcl:=info"],
     )
 
     return launch.LaunchDescription(
@@ -68,6 +69,7 @@ class ZmqTestNode(Node):
         super().__init__(name)
         self.test_message_received = Future()
         self.received_msg = None
+        self.expected_data = None
         self.publisher = self.create_publisher(String, pub_topic, 10)
         self.subscriber = self.create_subscription(
             String, sub_topic, self.listener_callback, 10
@@ -77,8 +79,9 @@ class ZmqTestNode(Node):
         self.publisher.publish(msg)
 
     def listener_callback(self, msg):
-        self.received_msg = msg
-        self.test_message_received.set_result(True)
+        if msg.data == self.expected_data and not self.test_message_received.done():
+            self.received_msg = msg
+            self.test_message_received.set_result(True)
 
 
 class TestZmq(unittest.TestCase):
@@ -91,59 +94,50 @@ class TestZmq(unittest.TestCase):
     def tearDownClass(cls):
         rclpy.shutdown()
 
-    def test_node_output(self, proc_output):
-        proc_output.assertWaitFor("Server bound", timeout=0.5)
-        proc_output.assertWaitFor("Client connected", timeout=0.5)
-
-        node = ZmqTestNode(
-            "zmq_test_node",
-            "/zmq1/test_topic",
-            "/zmq2/test_topic")
-        time.sleep(1.5)
-
-        test_msg = String()
-        test_msg.data = "Testing123"
-        node.publish(test_msg)
-
+    def check_delivery(self, name, pub_topic, sub_topic):
+        node = ZmqTestNode(name, pub_topic, sub_topic)
         try:
+            # Warm up until both DDS discovery and the ZMQ connection deliver.
+            node.expected_data = "warmup"
+            warmup = String(data=node.expected_data)
+            deadline = time.monotonic() + 15.0
+            while not node.test_message_received.done() and time.monotonic() < deadline:
+                node.publish(warmup)
+                rclpy.spin_once(node, timeout_sec=0.1)
+            self.assertTrue(
+                node.test_message_received.done(), "Bridge never became ready"
+            )
+
+            # Send the actual assertion sample once; retries must not hide loss.
+            node.expected_data = "Testing123:" + name
+            node.test_message_received = Future()
+            node.publish(String(data=node.expected_data))
             rclpy.spin_until_future_complete(
-                node, node.test_message_received, timeout_sec=10.0
+                node, node.test_message_received, timeout_sec=5.0
             )
             self.assertTrue(
-                node.test_message_received.done(), "Timeout on message receival."
+                node.test_message_received.done(), "Test sample was not delivered"
             )
-            self.assertEqual(
-                node.received_msg.data,
-                "Testing123",
-                "The received message did not match the expected output.",
-            )
+            self.assertEqual(node.received_msg.data, node.expected_data)
         finally:
             node.destroy_node()
 
-        node_push_pull = ZmqTestNode(
+    def test_pub_sub(self):
+        self.check_delivery("zmq_test_node", "/zmq1/test_topic", "/zmq2/test_topic")
+
+    def test_push_pull(self):
+        self.check_delivery(
             "zmq_push_pull_test_node",
             "/zmq1/push_pull/test_topic",
-            "/zmq2/push_pull/test_topic")
-        time.sleep(1.5)
+            "/zmq2/push_pull/test_topic",
+        )
 
-        node_push_pull.publish(test_msg)
 
-        try:
-            rclpy.spin_until_future_complete(
-                node_push_pull,
-                node_push_pull.test_message_received,
-                timeout_sec=10.0
-            )
-            self.assertTrue(
-                node_push_pull.test_message_received.done(), "Timeout on message receival."
-            )
-            self.assertEqual(
-                node_push_pull.received_msg.data,
-                "Testing123",
-                "The received message did not match the expected output.",
-            )
-        finally:
-            node_push_pull.destroy_node()
+@launch_testing.post_shutdown_test()
+class TestZmqShutdown(unittest.TestCase):
+    def test_clean_exit(self, proc_info):
+        launch_testing.asserts.assertExitCodes(proc_info)
+
 
 if __name__ == "__main__":
     launch_testing.main()
