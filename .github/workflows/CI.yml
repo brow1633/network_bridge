@@ -21,6 +21,10 @@ jobs:
       matrix:
         ROS_DISTRO: [humble, jazzy, kilted, lyrical, rolling]
         ROS_REPO: [main, testing]
+        # Rolling packages for Resolute are currently published in testing only.
+        exclude:
+          - ROS_DISTRO: rolling
+            ROS_REPO: main
 
     env:
       CCACHE_DIR: "${{ github.workspace }}/.ccache" # directory for ccache (and how we enable ccache in industrial_ci)
