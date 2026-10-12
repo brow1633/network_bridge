@@ -2,6 +2,17 @@
 Changelog for package network_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.1.0 (2026-10-11)
+------------------
+* Add ZMQ PUB/SUB and PUSH/PULL transports using system cppzmq.
+* Fix packet header parsing, timestamp decoding, and decompression error handling.
+* Fix TCP queue synchronization, shutdown, and reconnect handling.
+* Update Boost resolver APIs and dependencies for newer ROS distributions.
+* Add transport lifecycle tests and improve launch test timing and discovery handling.
+* Add installed TCP and UDP talker/listener demos with launch documentation.
+* Add a manually triggered Bloom release workflow.
+* Contributors: Cedric Pradalier, Ethan Brown, Lorenzo Ferrini
+
 3.0.0 (2026-02-14)
 ------------------
 * Add a specific management of TF topics
