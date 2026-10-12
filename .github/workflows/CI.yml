@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ROS_DISTRO: [humble, jazzy, kilted, rolling]
+        ROS_DISTRO: [humble, jazzy, kilted, lyrical, rolling]
         ROS_REPO: [main, testing]
 
     env:
@@ -40,4 +40,4 @@ jobs:
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
           ROS_REPO: ${{ matrix.ROS_REPO }}
           # Resolute provides colcon and its extensions through Ubuntu packages.
-          BEFORE_COLCON_SETUP: ${{ matrix.ROS_DISTRO == 'rolling' && 'sudo apt-get install -y --install-recommends colcon' || '' }}
+          BEFORE_COLCON_SETUP: ${{ (matrix.ROS_DISTRO == 'rolling' || matrix.ROS_DISTRO == 'lyrical') && 'sudo apt-get install -y --install-recommends colcon' || '' }}
