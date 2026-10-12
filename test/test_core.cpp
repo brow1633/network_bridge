@@ -116,7 +116,8 @@ TEST(QueueStreamTest, ShutdownReleasesReaderRegardlessOfScheduling)
 {
   using namespace std::chrono_literals;
   network_bridge::QueueStream stream;
-  auto reader = std::async(std::launch::async, [&stream]() {
+  auto reader = std::async(
+    std::launch::async, [&stream]() {
       std::vector<uint8_t> bytes;
       return stream.readBytes(bytes, 1);
     });
