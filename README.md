@@ -43,6 +43,48 @@ ros2 topic pub /zmq1/test_topic std_msgs/msg/String "data: 'Hello World'"
 ros2 topic echo /zmq2/test_topic
 ```
 
+#### Talker/listener demos
+
+The installed files in `demo/` bridge sample chatter and static transforms.
+The server starts both TCP and UDP bridges. Run the server in one terminal:
+
+```bash
+ros2 launch network_bridge demo_server.launch.py
+```
+
+In another terminal, run either client:
+
+```bash
+ros2 launch network_bridge tcp_demo_client.launch.py
+# Or:
+ros2 launch network_bridge udp_demo_client.launch.py
+```
+
+The talkers publish automatically. The listeners print the messages received
+through the bridge. The `demo_nodes_cpp` runtime dependency is installed with
+this package, or resolved by `rosdep` when building from source.
+
+For separate hosts, use the server's address on the TCP client:
+
+```bash
+ros2 launch network_bridge tcp_demo_client.launch.py server_host:=SERVER_IP
+```
+
+For UDP, configure both hosts. On the server:
+
+```bash
+ros2 launch network_bridge demo_server.launch.py udp_server_address:=0.0.0.0 udp_receiver_host:=CLIENT_IP
+```
+
+On the client:
+
+```bash
+ros2 launch network_bridge udp_demo_client.launch.py receiver_address:=0.0.0.0 server_host:=SERVER_IP
+```
+
+Replace `SERVER_IP` and `CLIENT_IP` with the hosts' reachable addresses. The
+port arguments are available through each launch file's `--show-args` option.
+
 ### Configuration
 Simply setup the network interface parameters and list your desired topics to get started.  If you are using UDP over cellular data, it is recommended to setup a VPN to facilitate connection.  Also, please note that **no encryption** occurs within this package.  Currently, if you would like encryption, you must use a VPN.
 
