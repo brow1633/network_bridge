@@ -1,5 +1,7 @@
 #include <chrono>
 #include <memory>
+#include <future>
+#include <atomic>
 #include <stdexcept>
 
 #include <boost/asio.hpp>
@@ -82,6 +84,35 @@ TEST_F(ZmqInterfaceTest, ClientCanCloseAndReopenWithoutServer)
   EXPECT_TRUE(interface.is_ready());
   // Receive-only clients must not send on their worker's socket.
   interface.write({1});
+  interface.close();
+}
+
+TEST_F(ZmqInterfaceTest, RejectsMultipartMessagesAndReceivesNextPacket)
+{
+  zmq::context_t context;
+  zmq::socket_t sender(context, zmq::socket_type::push);
+  sender.set(zmq::sockopt::linger, 0);
+  sender.set(zmq::sockopt::sndtimeo, 2000);
+  const int port = unused_port();
+  sender.bind("tcp://127.0.0.1:" + std::to_string(port));
+
+  std::promise<std::vector<uint8_t>> received;
+  auto result = received.get_future();
+  std::atomic<bool> delivered{false};
+  network_bridge::ZmqInterface interface;
+  interface.initialize(
+    node("client", "push_pull", port), [&](auto bytes) {
+      if (!delivered.exchange(true)) {
+        received.set_value(std::vector<uint8_t>(bytes.begin(), bytes.end()));
+      }
+    });
+  interface.open();
+  ASSERT_TRUE(sender.send(zmq::buffer("first", 5), zmq::send_flags::sndmore));
+  ASSERT_TRUE(sender.send(zmq::buffer("second", 6), zmq::send_flags::none));
+  const std::vector<uint8_t> payload{1, 2, 3};
+  ASSERT_TRUE(sender.send(zmq::buffer(payload), zmq::send_flags::none));
+  ASSERT_EQ(result.wait_for(std::chrono::seconds(3)), std::future_status::ready);
+  EXPECT_EQ(result.get(), payload);
   interface.close();
 }
 

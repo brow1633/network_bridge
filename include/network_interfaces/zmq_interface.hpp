@@ -32,7 +32,7 @@ SOFTWARE.
 #include <thread>
 #include <vector>
 
-#include <zmqpp/zmqpp.hpp>
+#include <zmq.hpp>
 
 #include "network_interfaces/network_interface_base.hpp"
 
@@ -82,8 +82,8 @@ protected:
   void receive_thread();
 
 private:
-  std::unique_ptr<zmqpp::context> context_;
-  std::shared_ptr<zmqpp::socket> socket_;
+  std::unique_ptr<zmq::context_t> context_;
+  std::unique_ptr<zmq::socket_t> socket_;
 
   std::string role_;
   std::string pattern_;

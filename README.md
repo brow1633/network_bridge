@@ -126,6 +126,9 @@ If some TFs need to be excluded or if the list of TFs to include is finite, one 
 - **TCP**: Opt for TCP when data integrity and reliability are critical. This ensures that control commands and state transitions are reliably delivered, though with potentially higher latency.
 - **ZMQ**: Use ZMQ for one-to-many PUB/SUB delivery or PUSH/PULL load distribution. These interfaces are unidirectional: servers send and clients receive. Run a second pair for communication in the other direction.
 
+The ZMQ plugin uses the system ZeroMQ library and cppzmq headers, installed by
+`rosdep` through `libzmq3-dev`. No ROS vendor package or source download is required.
+
 #### ZMQ Communication Patterns
 
 ZMQ supports multiple messaging patterns. This package currently supports two, configurable via the `pattern` parameter:

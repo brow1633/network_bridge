@@ -72,7 +72,7 @@ void ZmqInterface::load_parameters()
 void ZmqInterface::open()
 {
   close();
-  context_ = std::make_unique<zmqpp::context>();
+  context_ = std::make_unique<zmq::context_t>();
   shutting_down_ = false;
   failed_ = false;
   ready_ = false;
@@ -118,14 +118,22 @@ void ZmqInterface::close()
 void ZmqInterface::receive_thread()
 {
   try {
-    zmqpp::poller poller;
-    poller.add(*socket_, zmqpp::poller::poll_in);
+    zmq::pollitem_t item{socket_->handle(), 0, ZMQ_POLLIN, 0};
     while (!shutting_down_ && rclcpp::ok()) {
-      if (poller.poll(100)) {
-        zmqpp::message msg;
-        if (!socket_->receive(msg, true) || msg.parts() != 1) {continue;}
-        const void * data = msg.raw_data(0);
-        size_t size = msg.size(0);
+      zmq::poll(&item, 1, std::chrono::milliseconds(100));
+      if (item.revents & ZMQ_POLLIN) {
+        zmq::message_t msg;
+        if (!socket_->recv(msg, zmq::recv_flags::dontwait)) {continue;}
+        // A bridge packet is exactly one frame. Drain malformed multipart
+        // messages so their trailing frames cannot become separate packets.
+        if (msg.more()) {
+          do {
+            if (!socket_->recv(msg, zmq::recv_flags::dontwait)) {break;}
+          } while (msg.more());
+          continue;
+        }
+        const void * data = msg.data();
+        size_t size = msg.size();
         recv_cb_(
           std::span<const uint8_t>(static_cast<const uint8_t *>(data), size));
       }
@@ -139,13 +147,13 @@ void ZmqInterface::receive_thread()
 
 void ZmqInterface::setup_server()
 {
-  zmqpp::socket_type type =
-    (pattern_ == "pub_sub") ? zmqpp::socket_type::pub : zmqpp::socket_type::push;
-  socket_ = std::make_shared<zmqpp::socket>(*context_, type);
-  socket_->set(zmqpp::socket_option::linger, 0);
+  zmq::socket_type type =
+    (pattern_ == "pub_sub") ? zmq::socket_type::pub : zmq::socket_type::push;
+  socket_ = std::make_unique<zmq::socket_t>(*context_, type);
+  socket_->set(zmq::sockopt::linger, 0);
   try {
     socket_->bind("tcp://*:" + std::to_string(port_));
-  } catch (const zmqpp::exception & e) {
+  } catch (const zmq::error_t & e) {
     RCLCPP_ERROR(node_->get_logger(), "Bind failed: %s", e.what());
     failed_ = true;
     return;
@@ -155,16 +163,16 @@ void ZmqInterface::setup_server()
 
 void ZmqInterface::setup_client()
 {
-  zmqpp::socket_type type =
-    (pattern_ == "pub_sub") ? zmqpp::socket_type::sub : zmqpp::socket_type::pull;
-  socket_ = std::make_shared<zmqpp::socket>(*context_, type);
-  socket_->set(zmqpp::socket_option::linger, 0);
+  zmq::socket_type type =
+    (pattern_ == "pub_sub") ? zmq::socket_type::sub : zmq::socket_type::pull;
+  socket_ = std::make_unique<zmq::socket_t>(*context_, type);
+  socket_->set(zmq::sockopt::linger, 0);
   if (pattern_ == "pub_sub") {
-    socket_->subscribe("");
+    socket_->set(zmq::sockopt::subscribe, "");
   }
   try {
     socket_->connect("tcp://" + remote_address_ + ":" + std::to_string(port_));
-  } catch (const zmqpp::exception & e) {
+  } catch (const zmq::error_t & e) {
     RCLCPP_ERROR(node_->get_logger(), "Connect failed: %s", e.what());
     failed_ = true;
     return;
@@ -176,10 +184,9 @@ void ZmqInterface::write(const std::vector<uint8_t> & data)
 {
   if (!is_ready() || role_ != "server") {return;}
   try {
-    zmqpp::message msg;
-    msg.add_raw(data.data(), data.size());
+    zmq::message_t msg(data.data(), data.size());
     // Do not stall the ROS executor when a PUSH peer is absent or congested.
-    if (!socket_->send(msg, true)) {
+    if (!socket_->send(msg, zmq::send_flags::dontwait)) {
       RCLCPP_WARN(node_->get_logger(), "ZMQ send queue unavailable; dropping sample");
     }
   } catch (const std::exception & e) {

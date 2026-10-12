@@ -22,7 +22,10 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZSTD REQUIRED libzstd)
 pkg_check_modules(ZMQ REQUIRED IMPORTED_TARGET libzmq)
-find_package(zmqpp_vendor REQUIRED)
+find_path(CPPZMQ_INCLUDE_DIR zmq.hpp HINTS ${ZMQ_INCLUDE_DIRS})
+if(NOT CPPZMQ_INCLUDE_DIR)
+  message(FATAL_ERROR "cppzmq headers not found; install the libzmq3-dev rosdep dependency")
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
@@ -105,13 +108,7 @@ target_link_libraries(zmq_interface PUBLIC
   Threads::Threads
 )
 
-# New vendor releases export the upstream target; older releases export variables.
-if(TARGET zmqpp)
-  target_link_libraries(zmq_interface PUBLIC zmqpp)
-else()
-  target_include_directories(zmq_interface PUBLIC ${zmqpp_vendor_INCLUDE_DIRS})
-  target_link_libraries(zmq_interface PUBLIC ${zmqpp_vendor_LIBRARIES})
-endif()
+target_include_directories(zmq_interface PUBLIC ${CPPZMQ_INCLUDE_DIR})
 
 if(BUILD_TESTING)
   ament_add_gtest(test_zmq_interface test/test_zmq_interface.cpp TIMEOUT 15)
