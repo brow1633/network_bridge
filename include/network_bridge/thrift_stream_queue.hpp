@@ -13,43 +13,25 @@ class QueueStream : public Stream
 {
 protected:
   bool finish;
-  std::mutex mtx;
+  mutable std::mutex mtx;
   std::condition_variable q_condition;
   std::list<uint8_t> Q;
 
   uint8_t getOneByte(std::unique_lock<std::mutex> & lock)
   {
+    q_condition.wait(lock, [this]() {return finish || !Q.empty();});
     if (finish) {
       return 0;
-    } else {
-      if (Q.empty()) {
-        q_condition.wait(lock);
-        if (finish) {
-          return 0;
-        }
-      }
-      uint8_t v = Q.front();
-      Q.pop_front();
-      return v;
     }
+    uint8_t v = Q.front();
+    Q.pop_front();
+    return v;
   }
 
   uint8_t getOneByte()
   {
-    if (finish) {
-      return 0;
-    } else {
-      std::unique_lock<std::mutex> lock(mtx);
-      if (Q.empty()) {
-        q_condition.wait(lock);
-        if (finish) {
-          return 0;
-        }
-      }
-      uint8_t v = Q.front();
-      Q.pop_front();
-      return v;
-    }
+    std::unique_lock<std::mutex> lock(mtx);
+    return getOneByte(lock);
   }
 
 public:
@@ -65,6 +47,7 @@ public:
 
   bool is_shutdown() const
   {
+    std::unique_lock<std::mutex> lock(mtx);
     return finish;
   }
 
@@ -93,6 +76,7 @@ public:
   bool pushBytes(iterator begin, iterator end)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     while (begin != end) {
       Q.push_back(*begin);
       begin++;
@@ -105,6 +89,7 @@ public:
   bool pushUint8(uint8_t v)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     Q.push_back(v);
     q_condition.notify_all();
     return true;
@@ -113,6 +98,7 @@ public:
   bool pushUint16(uint16_t v)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     Q.push_back((v >> 8) & 0xFF);
     Q.push_back(v & 0xFF);
     q_condition.notify_all();
@@ -122,6 +108,7 @@ public:
   bool pushUint32(uint32_t v)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     Q.push_back((v >> 24) & 0xFF);
     Q.push_back((v >> 16) & 0xFF);
     Q.push_back((v >> 8) & 0xFF);
@@ -133,6 +120,7 @@ public:
   bool pushUint64(uint64_t v)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     Q.push_back((v >> 56) & 0xFF);
     Q.push_back((v >> 48) & 0xFF);
     Q.push_back((v >> 40) & 0xFF);
@@ -148,6 +136,7 @@ public:
   bool pushString(const std::string & v)
   {
     std::unique_lock<std::mutex> lock(mtx);
+    if (finish) {return false;}
     for (size_t i = 0; i < v.size(); i++) {
       Q.push_back(uint8_t(v[i]));
     }
@@ -161,11 +150,9 @@ public:
     std::unique_lock<std::mutex> lock(mtx);
     bytes.clear();
     while (bytes.size() < len) {
-      if (Q.empty()) {
-        q_condition.wait(lock);
-        if (finish) {
-          return false;
-        }
+      q_condition.wait(lock, [this]() {return finish || !Q.empty();});
+      if (finish) {
+        return false;
       }
       bytes.push_back(Q.front());
       Q.pop_front();

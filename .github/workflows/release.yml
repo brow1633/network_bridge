@@ -1,0 +1,39 @@
+name: Bloom release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ros_distros:
+        description: 'Space-separated ROS distros to release (check current support before running)'
+        type: string
+        required: true
+        default: 'humble jazzy kilted lyrical rolling'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bloom-network-bridge
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ github.repository == 'brow1633/network_bridge' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Release using Bloom
+        uses: at-wat/bloom-release-action@v0.0.13
+        with:
+          ros_distro: ${{ inputs.ros_distros }}
+          github_token_bloom: ${{ secrets.BLOOM_RELEASE_TOKEN }}
+          github_user: brow1633
+          git_user: Ethan Brown
+          git_email: brow1633@purdue.edu
+          repository: network_bridge
+          release_repository_push_url: https://github.com/ros2-gbp/network_bridge-release.git
+          tag_and_release: false
+          open_pr: true

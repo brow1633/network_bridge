@@ -1,7 +1,7 @@
 # Network Bridge
 [![CI](https://github.com/brow1633/network_bridge/actions/workflows/CI.yml/badge.svg)](https://github.com/brow1633/network_bridge/actions/workflows/CI.yml)
 
-**Network Bridge** is a lightweight ROS2 node designed for robust communication between robotic systems over arbitrary network protocols. Supporting UDP and TCP protocols out of the box, this packages seamlessly bridges ROS2 topics across networks, facilitating effective remote communications between a base station and robotic systems, or between multiple robotic systems.
+**Network Bridge** is a lightweight ROS2 node designed for robust communication between robotic systems over arbitrary network protocols. Supporting UDP, TCP, and ZMQ protocols out of the box, this packages seamlessly bridges ROS2 topics across networks, facilitating effective remote communications between a base station and robotic systems, or between multiple robotic systems.
 
 ## Installation
 ### Installation via apt
@@ -33,6 +33,16 @@ ros2 topic pub /udp1/MyDefaultTopic std_msgs/msg/String "data: 'Hello World'"
 
 ros2 topic echo /udp2/MyDefaultTopic
 ```
+#### ZMQ
+
+```
+ros2 launch network_bridge zmq.launch.py
+
+ros2 topic pub /zmq1/test_topic std_msgs/msg/String "data: 'Hello World'"
+
+ros2 topic echo /zmq2/test_topic
+```
+
 ### Configuration
 Simply setup the network interface parameters and list your desired topics to get started.  If you are using UDP over cellular data, it is recommended to setup a VPN to facilitate connection.  Also, please note that **no encryption** occurs within this package.  Currently, if you would like encryption, you must use a VPN.
 
@@ -95,7 +105,21 @@ If some TFs need to be excluded or if the list of TFs to include is finite, one 
 - **UDP**: Use UDP for low-latency, high-throughput communications, where occasional data loss is tolerable. Ideal for real-time telemetry data like sensor streams.
 - **TCP**: Opt for TCP when data integrity and reliability are critical. This ensures that control commands and state transitions are reliably delivered, though with potentially higher latency.
 
-Network protocols are implemented as pluginlib plugins, allowing the creation of arbitrary interfaces using the abstract class `include/network_interfaces/network_interface_base.hpp`.  Any interface that can send and receive bytes could theoretically be implemented, including protocols that go beyond point-to-point communication, such as ZMQ.  Please consider opening a pull request if you implement a new network interface.
+- **ZMQ**: Use ZMQ for one-to-many PUB/SUB delivery or PUSH/PULL load distribution. These interfaces are unidirectional: servers send and clients receive. Run a second pair for communication in the other direction.
+
+The ZMQ plugin uses the system ZeroMQ library and cppzmq headers, installed by
+`rosdep` through `libzmq3-dev`. No ROS vendor package or source download is required.
+
+#### ZMQ Communication Patterns
+
+ZMQ supports multiple messaging patterns. This package currently supports two, configurable via the `pattern` parameter:
+
+- **PUB/SUB** (`pattern: pub_sub`): One publisher broadcasts messages to multiple subscribers. Best for one-to-many data distribution (e.g., sensor streams to multiple consumers). Subscribers receive only the topics they subscribe to; late-joining subscribers miss messages sent before connection.
+
+- **PUSH/PULL** (`pattern: push_pull`): One pusher sends messages to a pool of pullers in a round-robin fashion. Best for load-balanced pipelines where each message must be processed by exactly one consumer. The bridge sends without blocking its ROS executor. Samples are dropped when the send queue is unavailable, so this does not guarantee delivery of every ROS message.
+
+
+Network protocols are implemented as pluginlib plugins, allowing the creation of arbitrary interfaces using the abstract class `include/network_interfaces/network_interface_base.hpp`.  Any interface that can send and receive bytes could theoretically be implemented, including protocols that go beyond point-to-point communication.  Please consider opening a pull request if you implement a new network interface.
 
 ### Tuning
 This node can be launched with logger level DEBUG, which provides useful information for tuning the compression, rate and stale message parameters.  For each message that is sent, the receiving side will output the number of bytes received, the decompressed size in bytes and the transmission delay.
